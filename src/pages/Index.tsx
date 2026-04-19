@@ -46,7 +46,6 @@ const Index = () => {
         [active]: { ...prev[active], [zikr]: next },
       };
       if (completed) {
-        if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([80,40,80,40,160]);
         setTimeout(() => setCompletion({ variant: zikr, laps: next.laps }), 0);
       }
       return updated;
