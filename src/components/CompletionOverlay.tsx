@@ -22,13 +22,13 @@ export const CompletionOverlay = ({ variant, waqtLabel, laps, onClose }: Props) 
     : 'اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّد';
 
   const particles = useMemo(() =>
-    Array.from({ length: 60 }, (_, i) => ({
+    Array.from({ length: 28 }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
-      delay: Math.random() * 0.4,
-      duration: 1.6 + Math.random() * 1.4,
-      dx: (Math.random() - 0.5) * 200,
-      size: 6 + Math.random() * 8,
+      delay: Math.random() * 0.5,
+      duration: 2 + Math.random() * 1.6,
+      dx: (Math.random() - 0.5) * 160,
+      size: 4 + Math.random() * 5,
     })), []);
 
   return (
@@ -43,8 +43,7 @@ export const CompletionOverlay = ({ variant, waqtLabel, laps, onClose }: Props) 
               left: `${p.left}%`,
               width: p.size,
               height: p.size * 1.6,
-              background: `hsl(var(${colorVar}))`,
-              boxShadow: `0 0 8px hsl(var(${colorVar}))`,
+              background: `hsl(var(${colorVar}) / 0.7)`,
               animation: `confetti-fall ${p.duration}s ease-in ${p.delay}s forwards`,
               ['--dx' as any]: `${p.dx}px`,
             }}
@@ -52,10 +51,7 @@ export const CompletionOverlay = ({ variant, waqtLabel, laps, onClose }: Props) 
         ))}
       </div>
 
-      <div className={cn(
-        "relative w-full max-w-sm rounded-3xl border bg-card p-6 text-center animate-scale-in",
-        isI ? "border-istegfar/40 shadow-istegfar" : "border-durood/40 shadow-durood"
-      )}>
+      <div className="relative w-full max-w-sm rounded-3xl bg-card/95 p-6 text-center animate-scale-in">
         <div className="text-5xl mb-2">{isI ? '🤲' : '🌙'}</div>
         <p className="font-arabic text-2xl mb-3 leading-loose" dir="rtl"
            style={{ color: `hsl(var(${colorVar}))` }}>

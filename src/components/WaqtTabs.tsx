@@ -9,7 +9,7 @@ interface Props {
 
 export const WaqtTabs = ({ active, current, onChange }: Props) => {
   return (
-    <div className="flex gap-1 p-1 rounded-2xl bg-card/60 backdrop-blur border border-border/50">
+    <div className="flex gap-1">
       {WAQTS.map(w => {
         const isActive = active === w.id;
         const isCurrent = current === w.id;
@@ -18,15 +18,18 @@ export const WaqtTabs = ({ active, current, onChange }: Props) => {
             key={w.id}
             onClick={() => onChange(w.id)}
             className={cn(
-              "flex-1 py-2 px-1 rounded-xl text-sm font-bengali transition-all relative",
-              isActive
-                ? "bg-foreground/10 text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground/80"
+              "flex-1 py-2.5 px-1 text-sm font-bengali transition-colors relative",
+              isActive ? "text-foreground" : "text-muted-foreground/70 hover:text-foreground/80"
             )}
           >
-            {w.label}
-            {isCurrent && (
-              <span className="absolute top-1 right-1.5 h-1.5 w-1.5 rounded-full bg-istegfar shadow-[0_0_8px_hsl(var(--istegfar))]" />
+            <span className="inline-flex items-center gap-1.5">
+              {w.label}
+              {isCurrent && (
+                <span className="h-1 w-1 rounded-full bg-istegfar/80" />
+              )}
+            </span>
+            {isActive && (
+              <span className="absolute left-1/2 -translate-x-1/2 bottom-0 h-px w-8 bg-foreground/40" />
             )}
           </button>
         );

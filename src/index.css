@@ -4,49 +4,49 @@
 
 @layer base {
   :root {
-    /* Dark Islamic theme — single mode */
-    --background: 210 22% 5%;            /* #080c10 */
-    --foreground: 40 30% 92%;
+    /* Warm, calm dark theme — cream-tinted, low saturation */
+    --background: 30 12% 7%;             /* warm near-black */
+    --foreground: 36 30% 88%;            /* warm cream */
 
-    --card: 210 20% 8%;
-    --card-foreground: 40 30% 92%;
+    --card: 30 10% 10%;
+    --card-foreground: 36 30% 88%;
 
-    --popover: 210 20% 8%;
-    --popover-foreground: 40 30% 92%;
+    --popover: 30 10% 10%;
+    --popover-foreground: 36 30% 88%;
 
-    --primary: 173 71% 36%;              /* teal #1a9e8e */
-    --primary-foreground: 210 22% 5%;
+    --primary: 172 32% 48%;              /* muted teal */
+    --primary-foreground: 30 12% 7%;
 
-    --secondary: 210 18% 12%;
-    --secondary-foreground: 40 30% 92%;
+    --secondary: 30 8% 14%;
+    --secondary-foreground: 36 30% 88%;
 
-    --muted: 210 18% 12%;
-    --muted-foreground: 40 10% 65%;
+    --muted: 30 8% 14%;
+    --muted-foreground: 36 12% 62%;
 
-    --accent: 41 78% 46%;                /* gold #d4a017 */
-    --accent-foreground: 210 22% 5%;
+    --accent: 38 38% 58%;                /* muted warm gold */
+    --accent-foreground: 30 12% 7%;
 
-    --destructive: 0 70% 50%;
+    --destructive: 0 50% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 18% 16%;
-    --input: 210 18% 16%;
-    --ring: 173 71% 36%;
+    --border: 30 8% 18%;
+    --input: 30 8% 18%;
+    --ring: 172 32% 48%;
 
     --radius: 1rem;
 
-    /* Zikr accent tokens */
-    --istegfar: 173 71% 36%;             /* #1a9e8e */
-    --istegfar-glow: 173 71% 50%;
-    --durood: 41 78% 46%;                /* #d4a017 */
-    --durood-glow: 41 90% 60%;
+    /* Zikr accent tokens — desaturated, soothing */
+    --istegfar: 172 32% 52%;             /* soft teal */
+    --istegfar-glow: 172 32% 62%;
+    --durood: 38 38% 60%;                /* parchment gold */
+    --durood-glow: 38 42% 70%;
 
-    --gradient-istegfar: linear-gradient(135deg, hsl(173 71% 30%), hsl(173 71% 45%));
-    --gradient-durood: linear-gradient(135deg, hsl(41 78% 40%), hsl(41 90% 56%));
-    --gradient-both: linear-gradient(135deg, hsl(173 71% 40%), hsl(41 78% 50%));
+    --gradient-istegfar: linear-gradient(135deg, hsl(172 30% 42%), hsl(172 32% 54%));
+    --gradient-durood: linear-gradient(135deg, hsl(38 36% 50%), hsl(38 40% 62%));
+    --gradient-both: linear-gradient(135deg, hsl(172 30% 50%), hsl(38 38% 58%));
 
-    --shadow-istegfar: 0 10px 30px -8px hsl(173 71% 30% / 0.55);
-    --shadow-durood: 0 10px 30px -8px hsl(41 78% 40% / 0.55);
+    --shadow-istegfar: 0 8px 24px -12px hsl(172 30% 30% / 0.35);
+    --shadow-durood: 0 8px 24px -12px hsl(38 36% 32% / 0.35);
   }
 }
 
@@ -61,9 +61,9 @@
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior: none;
     background-image:
-      radial-gradient(circle at 20% 10%, hsl(173 71% 20% / 0.12), transparent 40%),
-      radial-gradient(circle at 80% 90%, hsl(41 78% 25% / 0.10), transparent 45%),
-      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'><g fill='none' stroke='%23ffffff' stroke-opacity='0.05' stroke-width='1'><polygon points='40,6 48,32 74,32 53,48 61,74 40,58 19,74 27,48 6,32 32,32'/><polygon points='40,14 46,34 66,34 50,46 56,66 40,54 24,66 30,46 14,34 34,34'/></g></svg>");
+      radial-gradient(circle at 20% 10%, hsl(172 30% 18% / 0.06), transparent 50%),
+      radial-gradient(circle at 80% 90%, hsl(38 36% 22% / 0.05), transparent 55%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'><g fill='none' stroke='%23ffffff' stroke-opacity='0.02' stroke-width='1'><polygon points='40,6 48,32 74,32 53,48 61,74 40,58 19,74 27,48 6,32 32,32'/><polygon points='40,14 46,34 66,34 50,46 56,66 40,54 24,66 30,46 14,34 34,34'/></g></svg>");
     background-attachment: fixed;
   }
 
@@ -75,7 +75,7 @@
   .ripple {
     position: absolute;
     border-radius: 9999px;
-    background: rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.18);
     transform: scale(0);
     animation: ripple 600ms ease-out;
     pointer-events: none;

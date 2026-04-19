@@ -3,7 +3,6 @@ import { WAQTS, type WaqtId, getCurrentWaqt, waqtLabel } from '@/lib/waqt';
 import { loadAll, saveAll, type ZikrId } from '@/lib/storage';
 import { WaqtTabs } from '@/components/WaqtTabs';
 import { WaqtDots } from '@/components/WaqtDots';
-import { ProgressBars } from '@/components/ProgressBars';
 import { ZikrCard } from '@/components/ZikrCard';
 import { CompletionOverlay } from '@/components/CompletionOverlay';
 import { StatsBar } from '@/components/StatsBar';
@@ -75,60 +74,50 @@ const Index = () => {
 
   const todayI = WAQTS.reduce((s, w) => s + state[w.id].istegfar.laps * TARGETS.istegfar + state[w.id].istegfar.count, 0);
   const todayD = WAQTS.reduce((s, w) => s + state[w.id].durood.laps   * TARGETS.durood   + state[w.id].durood.count,   0);
-  const waqtI = ist.laps * TARGETS.istegfar + ist.count;
-  const waqtD = dur.laps * TARGETS.durood   + dur.count;
 
   return (
-    <main className="min-h-screen w-full max-w-md mx-auto px-4 pt-5 pb-6 flex flex-col gap-4">
+    <main className="min-h-screen w-full max-w-md mx-auto px-5 pt-7 pb-8 flex flex-col gap-6">
       {/* Header */}
       <header className="text-center">
-        <h1 className="font-bengali font-bold text-2xl tracking-wide">
-          <span className="bg-gradient-both bg-clip-text text-transparent">যিকর</span>
+        <h1 className="font-bengali text-2xl tracking-wide text-foreground/90 font-medium">
+          যিকর
         </h1>
-        <p className="text-[11px] text-muted-foreground font-bengali mt-0.5">
-          ইস্তেগফার ও দরূদ — বর্তমান ওয়াক্ত: <span className="text-foreground">{waqtLabel(currentWaqt)}</span>
+        <p className="text-[11px] text-muted-foreground/80 font-bengali mt-1">
+          বর্তমান ওয়াক্ত · <span className="text-foreground/80">{waqtLabel(currentWaqt)}</span>
         </p>
       </header>
 
       <WaqtTabs active={active} current={currentWaqt} onChange={setActive} />
 
-      <ProgressBars
-        istegfar={{ count: ist.count, target: TARGETS.istegfar }}
-        durood={{ count: dur.count, target: TARGETS.durood }}
-      />
+      <div className="flex flex-col gap-5">
+        <ZikrCard
+          variant="istegfar"
+          nameBn={ZIKR.istegfar.nameBn}
+          arabic={ZIKR.istegfar.arabic}
+          translit={ZIKR.istegfar.translit}
+          target={TARGETS.istegfar}
+          count={ist.count}
+          laps={ist.laps}
+          onTap={() => tap('istegfar')}
+          onReset={() => reset('istegfar')}
+        />
 
-      <ZikrCard
-        variant="istegfar"
-        nameBn={ZIKR.istegfar.nameBn}
-        arabic={ZIKR.istegfar.arabic}
-        translit={ZIKR.istegfar.translit}
-        target={TARGETS.istegfar}
-        count={ist.count}
-        laps={ist.laps}
-        onTap={() => tap('istegfar')}
-        onReset={() => reset('istegfar')}
-      />
-
-      <ZikrCard
-        variant="durood"
-        nameBn={ZIKR.durood.nameBn}
-        arabic={ZIKR.durood.arabic}
-        translit={ZIKR.durood.translit}
-        target={TARGETS.durood}
-        count={dur.count}
-        laps={dur.laps}
-        onTap={() => tap('durood')}
-        onReset={() => reset('durood')}
-      />
+        <ZikrCard
+          variant="durood"
+          nameBn={ZIKR.durood.nameBn}
+          arabic={ZIKR.durood.arabic}
+          translit={ZIKR.durood.translit}
+          target={TARGETS.durood}
+          count={dur.count}
+          laps={dur.laps}
+          onTap={() => tap('durood')}
+          onReset={() => reset('durood')}
+        />
+      </div>
 
       <WaqtDots states={dotStates} active={active} />
 
-      <StatsBar
-        todayIstegfar={todayI}
-        waqtIstegfar={waqtI}
-        todayDurood={todayD}
-        waqtDurood={waqtD}
-      />
+      <StatsBar todayIstegfar={todayI} todayDurood={todayD} />
 
       {completion && (
         <CompletionOverlay

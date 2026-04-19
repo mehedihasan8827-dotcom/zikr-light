@@ -10,7 +10,7 @@ interface Props {
 
 export const WaqtDots = ({ states, active }: Props) => {
   return (
-    <div className="flex items-center justify-center gap-3 py-2">
+    <div className="flex items-center justify-center gap-4 py-1">
       {WAQTS.map(w => {
         const s = states[w.id];
         const both = s.istegfar && s.durood;
@@ -18,18 +18,18 @@ export const WaqtDots = ({ states, active }: Props) => {
         const onlyD = !s.istegfar && s.durood;
         const none = !s.istegfar && !s.durood;
         return (
-          <div key={w.id} className="flex flex-col items-center gap-1">
+          <div key={w.id} className="flex flex-col items-center gap-1.5">
             <div
               className={cn(
-                "h-3 w-3 rounded-full transition-all",
-                both && "bg-gradient-both shadow-[0_0_10px_hsl(var(--durood))]",
-                onlyI && "bg-istegfar shadow-[0_0_8px_hsl(var(--istegfar))]",
-                onlyD && "bg-durood shadow-[0_0_8px_hsl(var(--durood))]",
+                "h-2 w-2 rounded-full transition-all",
+                both && "bg-gradient-both",
+                onlyI && "bg-istegfar/80",
+                onlyD && "bg-durood/80",
                 none && "bg-muted",
-                active === w.id && "ring-2 ring-foreground/40 ring-offset-2 ring-offset-background scale-110"
+                active === w.id && "ring-1 ring-foreground/30 ring-offset-2 ring-offset-background"
               )}
             />
-            <span className="text-[10px] text-muted-foreground font-bengali">{w.label}</span>
+            <span className="text-[10px] text-muted-foreground/70 font-bengali">{w.label}</span>
           </div>
         );
       })}
