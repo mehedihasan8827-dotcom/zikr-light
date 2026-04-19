@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { WAQTS, type WaqtId, getCurrentWaqt, waqtLabel } from '@/lib/waqt';
 import { loadAll, saveAll, type ZikrId } from '@/lib/storage';
+import { loadHistory, setToday } from '@/lib/history';
 import { WaqtTabs } from '@/components/WaqtTabs';
 import { WaqtDots } from '@/components/WaqtDots';
 import { ZikrCard } from '@/components/ZikrCard';
 import { CompletionOverlay } from '@/components/CompletionOverlay';
 import { StatsBar } from '@/components/StatsBar';
+import { StreakHistory } from '@/components/StreakHistory';
 
 const TARGETS: Record<ZikrId, number> = { istegfar: 1000, durood: 100 };
 
@@ -26,6 +28,7 @@ const Index = () => {
   const currentWaqt = useMemo(() => getCurrentWaqt(), []);
   const [active, setActive] = useState<WaqtId>(currentWaqt);
   const [state, setState] = useState(() => loadAll());
+  const [history, setHistory] = useState(() => loadHistory());
   const [completion, setCompletion] = useState<{ variant: ZikrId; laps: number } | null>(null);
 
   useEffect(() => { saveAll(state); }, [state]);
@@ -75,6 +78,11 @@ const Index = () => {
   const todayI = WAQTS.reduce((s, w) => s + state[w.id].istegfar.laps * TARGETS.istegfar + state[w.id].istegfar.count, 0);
   const todayD = WAQTS.reduce((s, w) => s + state[w.id].durood.laps   * TARGETS.durood   + state[w.id].durood.count,   0);
 
+  useEffect(() => {
+    setToday({ istegfar: todayI, durood: todayD });
+    setHistory(loadHistory());
+  }, [todayI, todayD]);
+
   return (
     <main className="min-h-screen w-full max-w-md mx-auto px-5 pt-7 pb-8 flex flex-col gap-6">
       {/* Header */}
@@ -118,6 +126,14 @@ const Index = () => {
       <WaqtDots states={dotStates} active={active} />
 
       <StatsBar todayIstegfar={todayI} todayDurood={todayD} />
+
+      <StreakHistory
+        history={history}
+        todayIstegfar={todayI}
+        todayDurood={todayD}
+        targetIstegfar={TARGETS.istegfar}
+        targetDurood={TARGETS.durood}
+      />
 
       {completion && (
         <CompletionOverlay
