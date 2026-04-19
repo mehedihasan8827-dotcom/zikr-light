@@ -32,7 +32,6 @@ const Index = () => {
   useEffect(() => { saveAll(state); }, [state]);
 
   const tap = (zikr: ZikrId) => {
-    if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(15);
     setState(prev => {
       const cur = prev[active][zikr];
       const next = { ...cur, count: cur.count + 1 };
@@ -47,7 +46,6 @@ const Index = () => {
         [active]: { ...prev[active], [zikr]: next },
       };
       if (completed) {
-        if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate([80,40,80,40,160]);
         setTimeout(() => setCompletion({ variant: zikr, laps: next.laps }), 0);
       }
       return updated;
