@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { WAQTS, type WaqtId, getCurrentWaqt, waqtLabel } from '@/lib/waqt';
 import { loadAll, saveAll, type ZikrId } from '@/lib/storage';
+import { loadHistory, setToday } from '@/lib/history';
 import { WaqtTabs } from '@/components/WaqtTabs';
 import { WaqtDots } from '@/components/WaqtDots';
 import { ZikrCard } from '@/components/ZikrCard';
 import { CompletionOverlay } from '@/components/CompletionOverlay';
 import { StatsBar } from '@/components/StatsBar';
+import { StreakHistory } from '@/components/StreakHistory';
 
 const TARGETS: Record<ZikrId, number> = { istegfar: 1000, durood: 100 };
 
@@ -26,6 +28,7 @@ const Index = () => {
   const currentWaqt = useMemo(() => getCurrentWaqt(), []);
   const [active, setActive] = useState<WaqtId>(currentWaqt);
   const [state, setState] = useState(() => loadAll());
+  const [history, setHistory] = useState(() => loadHistory());
   const [completion, setCompletion] = useState<{ variant: ZikrId; laps: number } | null>(null);
 
   useEffect(() => { saveAll(state); }, [state]);
