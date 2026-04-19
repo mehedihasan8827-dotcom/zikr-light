@@ -78,6 +78,11 @@ const Index = () => {
   const todayI = WAQTS.reduce((s, w) => s + state[w.id].istegfar.laps * TARGETS.istegfar + state[w.id].istegfar.count, 0);
   const todayD = WAQTS.reduce((s, w) => s + state[w.id].durood.laps   * TARGETS.durood   + state[w.id].durood.count,   0);
 
+  useEffect(() => {
+    setToday({ istegfar: todayI, durood: todayD });
+    setHistory(loadHistory());
+  }, [todayI, todayD]);
+
   return (
     <main className="min-h-screen w-full max-w-md mx-auto px-5 pt-7 pb-8 flex flex-col gap-6">
       {/* Header */}
@@ -121,6 +126,14 @@ const Index = () => {
       <WaqtDots states={dotStates} active={active} />
 
       <StatsBar todayIstegfar={todayI} todayDurood={todayD} />
+
+      <StreakHistory
+        history={history}
+        todayIstegfar={todayI}
+        todayDurood={todayD}
+        targetIstegfar={TARGETS.istegfar}
+        targetDurood={TARGETS.durood}
+      />
 
       {completion && (
         <CompletionOverlay
