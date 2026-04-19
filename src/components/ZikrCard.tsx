@@ -45,41 +45,36 @@ export const ZikrCard = ({ variant, nameBn, arabic, translit, target, count, lap
   const R = 22, C = 2 * Math.PI * R;
 
   return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-2xl border bg-card/80 backdrop-blur p-4 animate-scale-in",
-        isI ? "border-istegfar/30 shadow-istegfar" : "border-durood/30 shadow-durood"
-      )}
-    >
+    <div className="relative overflow-hidden rounded-2xl bg-card/50 backdrop-blur p-5 animate-scale-in">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div className="flex items-baseline gap-2">
           <span className={cn(
-            "px-2.5 py-1 rounded-full text-[11px] font-bengali font-semibold",
-            isI ? "bg-istegfar/15 text-istegfar" : "bg-durood/15 text-durood"
+            "font-bengali text-sm font-medium",
+            isI ? "text-istegfar" : "text-durood"
           )}>
-            {nameBn} · {toBengaliNumber(target)} বার
+            {nameBn}
           </span>
-          <span className="px-2 py-1 rounded-full text-[10px] font-bengali bg-secondary text-muted-foreground">
-            ল্যাপ {toBengaliNumber(laps)} বার
+          <span className="text-[11px] font-bengali text-muted-foreground/70">
+            ল্যাপ {toBengaliNumber(laps)}
           </span>
         </div>
 
         {/* Mini ring */}
         <div className="relative">
-          <svg width="56" height="56" viewBox="0 0 56 56" className="-rotate-90">
-            <circle cx="28" cy="28" r={R} stroke="hsl(var(--secondary))" strokeWidth="5" fill="none" />
+          <svg width="48" height="48" viewBox="0 0 56 56" className="-rotate-90">
+            <circle cx="28" cy="28" r={R} stroke="hsl(var(--muted))" strokeWidth="3" fill="none" />
             <circle
               cx="28" cy="28" r={R}
               stroke={`hsl(var(--${accent}))`}
-              strokeWidth="5" fill="none" strokeLinecap="round"
+              strokeWidth="3" fill="none" strokeLinecap="round"
               strokeDasharray={C}
               strokeDashoffset={C * (1 - pct)}
-              className="transition-all duration-300"
+              className="transition-all duration-300 opacity-80"
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className={cn("text-[11px] font-bengali font-bold", isI ? "text-istegfar" : "text-durood")}>
+            <span className="text-[10px] font-bengali text-muted-foreground tabular-nums">
               {toBengaliNumber(Math.round(pct * 100))}%
             </span>
           </div>
@@ -87,24 +82,27 @@ export const ZikrCard = ({ variant, nameBn, arabic, translit, target, count, lap
       </div>
 
       {/* Arabic */}
-      <p className={cn(
-        "font-arabic text-center leading-loose mb-1",
-        isI ? "text-istegfar-glow" : "text-durood-glow"
-      )} style={{ fontSize: isI ? '1.65rem' : '1.5rem', direction: 'rtl' }}>
+      <p
+        className="font-arabic text-center leading-loose mb-2 text-foreground/85"
+        style={{ fontSize: isI ? '1.6rem' : '1.45rem', direction: 'rtl' }}
+      >
         {arabic}
       </p>
-      <p className="text-center text-xs text-muted-foreground font-bengali mb-4">{translit}</p>
+      <p className="text-center text-[11px] text-muted-foreground/70 font-bengali mb-5">{translit}</p>
 
       {/* Count */}
-      <div className="text-center mb-3">
-        <div className={cn(
-          "font-bengali font-bold tabular-nums",
-          isI ? "text-istegfar" : "text-durood"
-        )} style={{ fontSize: '2.4rem', lineHeight: 1 }}>
+      <div className="text-center mb-5">
+        <div
+          className={cn(
+            "font-bengali tabular-nums font-light",
+            isI ? "text-istegfar" : "text-durood"
+          )}
+          style={{ fontSize: '3rem', lineHeight: 1 }}
+        >
           {toBengaliNumber(count)}
         </div>
-        <div className="text-[10px] text-muted-foreground font-bengali mt-0.5">
-          লক্ষ্য {toBengaliNumber(target)}
+        <div className="text-[10px] text-muted-foreground/70 font-bengali mt-1.5 tracking-wide">
+          / {toBengaliNumber(target)}
         </div>
       </div>
 
@@ -113,8 +111,8 @@ export const ZikrCard = ({ variant, nameBn, arabic, translit, target, count, lap
           ref={btnRef}
           onClick={handleTap}
           className={cn(
-            "relative overflow-hidden flex-1 h-14 rounded-xl font-bengali font-semibold text-base text-primary-foreground active:animate-pop transition-transform",
-            isI ? "bg-gradient-istegfar shadow-istegfar" : "bg-gradient-durood shadow-durood"
+            "relative overflow-hidden flex-1 h-14 rounded-xl font-bengali font-medium text-sm text-primary-foreground transition-transform active:scale-[0.98]",
+            isI ? "bg-istegfar/90 hover:bg-istegfar" : "bg-durood/90 hover:bg-durood"
           )}
         >
           <span className="relative z-10">গণনা করুন</span>
@@ -129,9 +127,9 @@ export const ZikrCard = ({ variant, nameBn, arabic, translit, target, count, lap
         <button
           onClick={onReset}
           aria-label="রিসেট"
-          className="h-14 w-14 rounded-xl bg-secondary text-muted-foreground hover:text-foreground active:scale-95 transition flex items-center justify-center"
+          className="h-14 w-14 rounded-xl bg-secondary/60 text-muted-foreground/80 hover:text-foreground active:scale-95 transition flex items-center justify-center"
         >
-          <RotateCcw className="h-5 w-5" />
+          <RotateCcw className="h-4 w-4" />
         </button>
       </div>
     </div>

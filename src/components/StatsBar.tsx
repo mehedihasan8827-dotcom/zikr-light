@@ -3,34 +3,27 @@ import { cn } from '@/lib/utils';
 
 interface Props {
   todayIstegfar: number;
-  waqtIstegfar: number;
   todayDurood: number;
-  waqtDurood: number;
 }
 
-export const StatsBar = ({ todayIstegfar, waqtIstegfar, todayDurood, waqtDurood }: Props) => {
+export const StatsBar = ({ todayIstegfar, todayDurood }: Props) => {
   return (
-    <div className="grid grid-cols-2 gap-2">
-      <Tile label="আজকের ইস্তেগফার" value={todayIstegfar} variant="istegfar" />
-      <Tile label="এ ওয়াক্তে ইস্তেগফার" value={waqtIstegfar} variant="istegfar" subtle />
-      <Tile label="আজকের দরূদ" value={todayDurood} variant="durood" />
-      <Tile label="এ ওয়াক্তে দরূদ" value={waqtDurood} variant="durood" subtle />
+    <div className="flex items-center justify-around rounded-xl bg-card/40 backdrop-blur py-3 px-2">
+      <Stat label="আজকের ইস্তেগফার" value={todayIstegfar} variant="istegfar" />
+      <div className="h-8 w-px bg-border/60" />
+      <Stat label="আজকের দরূদ" value={todayDurood} variant="durood" />
     </div>
   );
 };
 
-const Tile = ({ label, value, variant, subtle }: { label: string; value: number; variant: 'istegfar' | 'durood'; subtle?: boolean }) => (
-  <div className={cn(
-    "rounded-xl border p-3 bg-card/70 backdrop-blur",
-    variant === 'istegfar' ? "border-istegfar/20" : "border-durood/20",
-    subtle && "opacity-90"
-  )}>
-    <div className="text-[10px] font-bengali text-muted-foreground mb-0.5">{label}</div>
+const Stat = ({ label, value, variant }: { label: string; value: number; variant: 'istegfar' | 'durood' }) => (
+  <div className="flex flex-col items-center gap-0.5 px-2">
     <div className={cn(
-      "font-bengali font-bold text-xl tabular-nums",
+      "font-bengali font-medium text-lg tabular-nums",
       variant === 'istegfar' ? "text-istegfar" : "text-durood"
     )}>
       {toBengaliNumber(value)}
     </div>
+    <div className="text-[10px] font-bengali text-muted-foreground/70">{label}</div>
   </div>
 );
