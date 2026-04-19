@@ -25,7 +25,7 @@ function blank(): AllState {
 
 export function loadAll(): AllState {
   try {
-    const raw = sessionStorage.getItem(KEY);
+    const raw = localStorage.getItem(KEY);
     if (!raw) return blank();
     const parsed = JSON.parse(raw);
     return { ...blank(), ...parsed };
@@ -35,5 +35,5 @@ export function loadAll(): AllState {
 }
 
 export function saveAll(state: AllState) {
-  try { sessionStorage.setItem(KEY, JSON.stringify(state)); } catch {}
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {}
 }
