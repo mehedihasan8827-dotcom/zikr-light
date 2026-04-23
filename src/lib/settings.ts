@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
+import { setHapticsEnabled } from './haptics';
 
 export type BgTone = 'darker' | 'default' | 'lighter';
 
 export interface AppSettings {
   patternOpacity: number; // 0..1
   bgTone: BgTone;
+  haptics: boolean;
+  targetIstegfar: number;
+  targetDurood: number;
 }
 
 const KEY = 'zikr-settings-v1';
@@ -12,7 +16,12 @@ const KEY = 'zikr-settings-v1';
 const DEFAULTS: AppSettings = {
   patternOpacity: 0.02,
   bgTone: 'default',
+  haptics: true,
+  targetIstegfar: 1000,
+  targetDurood: 100,
 };
+
+export const TARGET_PRESETS = [33, 100, 300, 500, 1000];
 
 export function loadSettings(): AppSettings {
   try {
@@ -47,6 +56,7 @@ export function applySettings(s: AppSettings) {
   root.style.setProperty('--card', CARD_HSL[s.bgTone]);
   root.style.setProperty('--popover', CARD_HSL[s.bgTone]);
   root.style.setProperty('--pattern-opacity', String(s.patternOpacity));
+  setHapticsEnabled(s.haptics);
 }
 
 export function useSettings() {
