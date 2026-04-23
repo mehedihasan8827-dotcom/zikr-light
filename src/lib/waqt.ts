@@ -13,13 +13,23 @@ export const WAQTS: Waqt[] = [
   { id: 'isha',    label: 'ইশা' },
 ];
 
+/**
+ * Approximate waqt windows (local time).
+ * These are heuristics for UI grouping, not precise prayer times.
+ *  fajr:    04:00 – 06:30  (pre-sunrise window)
+ *  dhuhr:   12:00 – 15:30
+ *  asr:     15:30 – 17:30
+ *  maghrib: 17:30 – 19:00
+ *  isha:    19:00 – 04:00
+ *  06:30 – 12:00 → ishraq/duha → bucket as 'fajr' (still morning recitation)
+ */
 export function getCurrentWaqt(date = new Date()): WaqtId {
-  const h = date.getHours();
-  if (h >= 4  && h < 12) return 'fajr';        // pre-dhuhr → treat morning as fajr
-  if (h >= 12 && h < 15) return 'dhuhr';
-  if (h >= 15 && h < 17) return 'asr';
-  if (h >= 17 && h < 19) return 'maghrib';
-  return 'isha'; // 19:00 – 03:59
+  const mins = date.getHours() * 60 + date.getMinutes();
+  if (mins >= 240  && mins < 720)  return 'fajr';     // 04:00 – 12:00
+  if (mins >= 720  && mins < 930)  return 'dhuhr';    // 12:00 – 15:30
+  if (mins >= 930  && mins < 1050) return 'asr';      // 15:30 – 17:30
+  if (mins >= 1050 && mins < 1140) return 'maghrib';  // 17:30 – 19:00
+  return 'isha';                                       // 19:00 – 04:00
 }
 
 export function waqtLabel(id: WaqtId): string {
