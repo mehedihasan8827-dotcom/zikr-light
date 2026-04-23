@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toBengaliNumber } from '@/lib/bengali';
-import { todayKey, type HistoryMap } from '@/lib/history';
+import { todayKey, earliestDateKey, type HistoryMap } from '@/lib/history';
 
 interface Props {
   history: HistoryMap;
@@ -36,6 +36,11 @@ export const StreakHistory = ({ history, todayIstegfar, todayDurood, targetIsteg
   const isCurrentMonth =
     view.getFullYear() === today.getFullYear() && view.getMonth() === today.getMonth();
 
+  const earliest = earliestDateKey();
+  const earliestDate = earliest ? new Date(earliest + 'T00:00:00') : today;
+  const isEarliestMonth =
+    view.getFullYear() === earliestDate.getFullYear() && view.getMonth() === earliestDate.getMonth();
+
   const cells = useMemo(() => {
     const year = view.getFullYear();
     const month = view.getMonth();
@@ -68,14 +73,17 @@ export const StreakHistory = ({ history, todayIstegfar, todayDurood, targetIsteg
     let active = 0, totalI = 0, totalD = 0;
     cells.forEach(c => {
       if (!c) return;
-      if (c.combined > 0) active++;
+      if (c.combined >= 0.5) active++;
       totalI += c.iVal;
       totalD += c.dVal;
     });
     return { active, totalI, totalD };
   }, [cells]);
 
-  const prevMonth = () => setView(v => new Date(v.getFullYear(), v.getMonth() - 1, 1));
+  const prevMonth = () => {
+    if (isEarliestMonth) return;
+    setView(v => new Date(v.getFullYear(), v.getMonth() - 1, 1));
+  };
   const nextMonth = () => {
     if (isCurrentMonth) return;
     setView(v => new Date(v.getFullYear(), v.getMonth() + 1, 1));
@@ -87,8 +95,9 @@ export const StreakHistory = ({ history, todayIstegfar, todayDurood, targetIsteg
       <div className="flex items-center justify-between mb-3">
         <button
           onClick={prevMonth}
+          disabled={isEarliestMonth}
           aria-label="আগের মাস"
-          className="h-8 w-8 rounded-md text-muted-foreground/80 hover:text-foreground hover:bg-secondary/60 transition flex items-center justify-center"
+          className="h-8 w-8 rounded-md text-muted-foreground/80 hover:text-foreground hover:bg-secondary/60 transition flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -134,7 +143,7 @@ export const StreakHistory = ({ history, todayIstegfar, todayDurood, targetIsteg
                 className="absolute right-0 bottom-0 w-1/2 bg-durood/75 transition-all"
                 style={{ height: `${c.dPct * 100}%` }}
               />
-              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bengali tabular-nums text-foreground/70 mix-blend-luminosity">
+              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bengali tabular-nums text-foreground/80 drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
                 {toBengaliNumber(c.date.getDate())}
               </span>
             </div>
