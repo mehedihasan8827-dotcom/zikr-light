@@ -8,6 +8,8 @@ import { ZikrCard } from '@/components/ZikrCard';
 import { CompletionOverlay } from '@/components/CompletionOverlay';
 import { StatsBar } from '@/components/StatsBar';
 import { StreakHistory } from '@/components/StreakHistory';
+import { SettingsSheet } from '@/components/SettingsSheet';
+import { useSettings } from '@/lib/settings';
 
 const TARGETS: Record<ZikrId, number> = { istegfar: 1000, durood: 100 };
 
@@ -30,6 +32,7 @@ const Index = () => {
   const [state, setState] = useState(() => loadAll());
   const [history, setHistory] = useState(() => loadHistory());
   const [completion, setCompletion] = useState<{ variant: ZikrId; laps: number } | null>(null);
+  const [settings, setSettings] = useSettings();
 
   useEffect(() => { saveAll(state); }, [state]);
 
@@ -104,13 +107,14 @@ const Index = () => {
   return (
     <main className="min-h-screen w-full max-w-md mx-auto px-5 pt-7 pb-8 flex flex-col gap-6">
       {/* Header */}
-      <header className="text-center">
+      <header className="text-center relative">
         <h1 className="font-bengali text-2xl tracking-wide text-foreground/90 font-medium">
           যিকর
         </h1>
         <p className="text-[11px] text-muted-foreground/80 font-bengali mt-1">
           বর্তমান ওয়াক্ত · <span className="text-foreground/80">{waqtLabel(currentWaqt)}</span>
         </p>
+        <SettingsSheet settings={settings} onChange={setSettings} />
       </header>
 
       <WaqtTabs active={active} current={currentWaqt} onChange={setActive} />
