@@ -8,10 +8,9 @@ import { ZikrCard } from '@/components/ZikrCard';
 import { CompletionOverlay } from '@/components/CompletionOverlay';
 import { StatsBar } from '@/components/StatsBar';
 import { StreakHistory } from '@/components/StreakHistory';
+import { WeeklySummary } from '@/components/WeeklySummary';
 import { SettingsSheet } from '@/components/SettingsSheet';
 import { useSettings } from '@/lib/settings';
-
-const TARGETS: Record<ZikrId, number> = { istegfar: 1000, durood: 100 };
 
 const ZIKR = {
   istegfar: {
