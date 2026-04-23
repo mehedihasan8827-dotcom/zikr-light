@@ -2,6 +2,7 @@ import { useRef, useState, type MouseEvent, type TouchEvent } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toBengaliNumber } from '@/lib/bengali';
+import { haptic } from '@/lib/haptics';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -43,6 +44,9 @@ export const ZikrCard = ({ variant, nameBn, arabic, translit, target, count, lap
       setRipples(r => [...r, { id, x, y, size }]);
       setTimeout(() => setRipples(r => r.filter(rp => rp.id !== id)), 600);
     }
+    // Haptic feedback: stronger pulse when this tap completes a lap.
+    const willComplete = count + 1 >= target;
+    haptic(willComplete ? 'lap' : 'tap');
     onTap();
   };
 

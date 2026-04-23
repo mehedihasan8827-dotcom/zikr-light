@@ -8,10 +8,9 @@ import { ZikrCard } from '@/components/ZikrCard';
 import { CompletionOverlay } from '@/components/CompletionOverlay';
 import { StatsBar } from '@/components/StatsBar';
 import { StreakHistory } from '@/components/StreakHistory';
+import { WeeklySummary } from '@/components/WeeklySummary';
 import { SettingsSheet } from '@/components/SettingsSheet';
 import { useSettings } from '@/lib/settings';
-
-const TARGETS: Record<ZikrId, number> = { istegfar: 1000, durood: 100 };
 
 const ZIKR = {
   istegfar: {
@@ -33,6 +32,10 @@ const Index = () => {
   const [history, setHistory] = useState(() => loadHistory());
   const [completion, setCompletion] = useState<{ variant: ZikrId; laps: number } | null>(null);
   const [settings, setSettings] = useSettings();
+  const TARGETS: Record<ZikrId, number> = {
+    istegfar: settings.targetIstegfar,
+    durood: settings.targetDurood,
+  };
 
   useEffect(() => { saveAll(state); }, [state]);
 
@@ -152,6 +155,13 @@ const Index = () => {
         todayDurood={todayD}
         targetIstegfar={TARGETS.istegfar * WAQTS.length}
         targetDurood={TARGETS.durood * WAQTS.length}
+      />
+
+      <WeeklySummary
+        todayIstegfar={todayI}
+        todayDurood={todayD}
+        targetIstegfar={TARGETS.istegfar}
+        targetDurood={TARGETS.durood}
       />
 
       <StreakHistory
