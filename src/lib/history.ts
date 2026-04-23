@@ -25,10 +25,22 @@ export function saveHistory(h: HistoryMap) {
   try { localStorage.setItem(KEY, JSON.stringify(h)); } catch {}
 }
 
-export function setToday(totals: DayTotals) {
+/** Set totals for an arbitrary date (used when archiving previous day on rollover). */
+export function setTotals(dateKey: string, totals: DayTotals) {
   const h = loadHistory();
-  h[todayKey()] = totals;
+  h[dateKey] = totals;
   saveHistory(h);
+}
+
+export function setToday(totals: DayTotals) {
+  setTotals(todayKey(), totals);
+}
+
+/** Earliest date we have any record of (used to limit calendar back-navigation). */
+export function earliestDateKey(): string | null {
+  const h = loadHistory();
+  const keys = Object.keys(h).sort();
+  return keys[0] ?? null;
 }
 
 export function lastNDays(n: number): { key: string; date: Date }[] {

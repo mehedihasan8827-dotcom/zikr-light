@@ -25,7 +25,7 @@ export const WaqtTabs = ({ active, current, onChange }: Props) => {
             <span className="inline-flex items-center gap-1.5">
               {w.label}
               {isCurrent && (
-                <span className="h-1 w-1 rounded-full bg-istegfar/80" />
+                <span className="h-1 w-1 rounded-full bg-foreground/50" />
               )}
             </span>
             {isActive && (

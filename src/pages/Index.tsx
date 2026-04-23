@@ -25,13 +25,31 @@ const ZIKR = {
 } as const;
 
 const Index = () => {
-  const currentWaqt = useMemo(() => getCurrentWaqt(), []);
+  const [currentWaqt, setCurrentWaqt] = useState<WaqtId>(() => getCurrentWaqt());
   const [active, setActive] = useState<WaqtId>(currentWaqt);
   const [state, setState] = useState(() => loadAll());
   const [history, setHistory] = useState(() => loadHistory());
   const [completion, setCompletion] = useState<{ variant: ZikrId; laps: number } | null>(null);
 
   useEffect(() => { saveAll(state); }, [state]);
+
+  // Live update current waqt every minute, and detect midnight rollover.
+  useEffect(() => {
+    const tick = () => {
+      const w = getCurrentWaqt();
+      setCurrentWaqt(prev => (prev === w ? prev : w));
+      // Midnight rollover: loadAll() will archive previous day & return blank.
+      const fresh = loadAll();
+      setState(prev => {
+        const prevDay = JSON.stringify(prev);
+        const freshDay = JSON.stringify(fresh);
+        return prevDay === freshDay ? prev : fresh;
+      });
+      setHistory(loadHistory());
+    };
+    const id = window.setInterval(tick, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const tap = (zikr: ZikrId) => {
     setState(prev => {
@@ -125,7 +143,12 @@ const Index = () => {
 
       <WaqtDots states={dotStates} active={active} />
 
-      <StatsBar todayIstegfar={todayI} todayDurood={todayD} />
+      <StatsBar
+        todayIstegfar={todayI}
+        todayDurood={todayD}
+        targetIstegfar={TARGETS.istegfar * WAQTS.length}
+        targetDurood={TARGETS.durood * WAQTS.length}
+      />
 
       <StreakHistory
         history={history}

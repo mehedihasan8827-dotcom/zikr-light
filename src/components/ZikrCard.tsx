@@ -2,6 +2,11 @@ import { useRef, useState, type MouseEvent, type TouchEvent } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toBengaliNumber } from '@/lib/bengali';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 type Variant = 'istegfar' | 'durood';
 
@@ -124,13 +129,28 @@ export const ZikrCard = ({ variant, nameBn, arabic, translit, target, count, lap
             />
           ))}
         </button>
-        <button
-          onClick={onReset}
-          aria-label="রিসেট"
-          className="h-14 w-14 rounded-xl bg-secondary/60 text-muted-foreground/80 hover:text-foreground active:scale-95 transition flex items-center justify-center"
-        >
-          <RotateCcw className="h-4 w-4" />
-        </button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              aria-label="রিসেট"
+              className="h-14 w-14 rounded-xl bg-secondary/60 text-muted-foreground/80 hover:text-foreground active:scale-95 transition flex items-center justify-center"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="font-bengali">গণনা রিসেট করবেন?</AlertDialogTitle>
+              <AlertDialogDescription className="font-bengali">
+                এই ওয়াক্তের {nameBn}-এর বর্তমান গণনা ({toBengaliNumber(count)}) মুছে যাবে। ল্যাপ অপরিবর্তিত থাকবে।
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="font-bengali">বাতিল</AlertDialogCancel>
+              <AlertDialogAction onClick={onReset} className="font-bengali">রিসেট</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
