@@ -1,0 +1,235 @@
+<!-- ===== Himsagor Hero — Elementor HTML widget ready ===== -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap">
+
+<section class="pfm-himsagor-hero">
+  <style>
+    .pfm-himsagor-hero * { box-sizing: border-box; margin: 0; padding: 0; }
+    .pfm-himsagor-hero {
+      font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'SolaimanLipi', system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(circle at 100% 0%, rgba(31,122,58,.06), transparent 50%),
+        radial-gradient(circle at 0% 100%, rgba(255,193,7,.10), transparent 50%),
+        #FFFFFF;
+      color: #1A1A1A;
+      padding: 0 0 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .pfm-h-strip {
+      background: linear-gradient(180deg, #1F7A3A 0%, #1B6A33 100%);
+      color: #FFFFFF; text-align: center;
+      padding: 12px 20px; font-size: 13.5px; font-weight: 600;
+      letter-spacing: .2px; line-height: 1.5;
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; flex-wrap: wrap;
+      text-shadow: 0 1px 0 rgba(0,0,0,.12);
+    }
+    .pfm-h-strip .txt { display: inline-flex; align-items: center; gap: 6px 10px; flex-wrap: wrap; justify-content: center; }
+    .pfm-h-strip .sep { opacity: .45; margin: 0 2px; }
+    .pfm-h-strip b { font-weight: 700; color: #FFE680; }
+    .pfm-h-strip .pulse {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #FFC107; display: inline-block;
+      box-shadow: 0 0 0 0 rgba(255,193,7,.7);
+      animation: pfmPulse 1.6s infinite;
+    }
+    @keyframes pfmPulse {
+      0% { box-shadow: 0 0 0 0 rgba(255,193,7,.7); }
+      70% { box-shadow: 0 0 0 8px rgba(255,193,7,0); }
+      100% { box-shadow: 0 0 0 0 rgba(255,193,7,0); }
+    }
+    .pfm-h-wrap { max-width: 680px; margin: 0 auto; padding: 48px 20px 0; text-align: center; position: relative; }
+    .pfm-h-title { font-size: clamp(24px, 6.4vw, 40px); line-height: 1.4; font-weight: 700; color: #0F2A1A; margin-bottom: 16px; letter-spacing: -.2px; }
+    .pfm-h-title .line { display: block; }
+    .pfm-h-title .green { color: #1F7A3A; }
+    .pfm-h-title .hl { background: linear-gradient(180deg, transparent 55%, #FFE680 55%); padding: 0 6px 2px; }
+    .pfm-h-sub {
+      font-size: clamp(15px, 4vw, 20px); color: #C1121F; line-height: 1.55;
+      font-weight: 700; margin-bottom: 14px;
+      display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;
+    }
+    .pfm-h-sub .x {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 24px; height: 24px; border-radius: 50%;
+      background: #1F7A3A; color: #FFFFFF; flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(31,122,58,.25);
+    }
+    .pfm-h-sub .x svg { width: 14px; height: 14px; }
+
+    /* ── Avatar pill (avatars only) ── */
+    .pfm-h-avatars-pill {
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 10px;
+      background: #FAFAF7; border: 1px solid #ECECE5;
+      padding: 8px 16px; border-radius: 999px;
+      width: fit-content;
+    }
+    .pfm-h-avatars { display: inline-flex; align-items: center; }
+    .pfm-h-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 2px solid #FFFFFF; margin-left: -8px;
+      object-fit: cover; display: inline-block;
+      background: #EDF7EE; box-shadow: 0 1px 2px rgba(0,0,0,.08);
+    }
+    .pfm-h-avatar:first-child { margin-left: 0; }
+
+    /* ── Stars + count — now a separate element ── */
+    .pfm-h-rating {
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; flex-wrap: wrap;
+      margin: 0 auto 26px;
+      font-size: 15px; font-weight: 600; color: #1A1A1A;
+      letter-spacing: .1px;
+    }
+    .pfm-h-rating .stars { color: #F5A524; letter-spacing: 1px; font-size: 18px; }
+    .pfm-h-rating b { color: #0F2A1A; font-weight: 700; }
+
+    .pfm-h-cta {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 12px; padding: 18px 28px;
+      font-size: 18px; font-weight: 700;
+      background: linear-gradient(180deg, #FFD43B 0%, #FFC107 100%);
+      color: #0F2A1A; border-radius: 16px;
+      text-decoration: none; border: none; cursor: pointer; line-height: 1;
+      font-family: inherit;
+      box-shadow: 0 10px 24px -8px rgba(255,167,0,.55), 0 2px 6px rgba(15,42,26,.08);
+      transition: all .2s ease;
+      margin-bottom: 14px;
+      width: 100%; max-width: 320px; position: relative;
+    }
+    .pfm-h-cta:hover { transform: translateY(-1px); box-shadow: 0 14px 30px -8px rgba(255,167,0,.65), 0 4px 10px rgba(15,42,26,.10); color: #0F2A1A; }
+    .pfm-h-cta svg { flex-shrink: 0; }
+    .pfm-h-cta .arr { display: inline-block; transition: transform .2s ease; }
+    .pfm-h-cta:hover .arr { transform: translateX(4px); }
+    .pfm-h-microcopy {
+      font-size: 12.5px; color: #6a6a6a; font-weight: 500;
+      margin-bottom: 28px;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .pfm-h-microcopy .lock { color: #1F7A3A; }
+    .pfm-h-trust { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 560px; margin: 0 auto 8px; }
+    .pfm-h-trust-item {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 8px; padding: 16px 10px;
+      background: #F4F8F2; border: none; border-radius: 14px;
+      text-align: center; box-shadow: 0 1px 2px rgba(15,42,26,.04);
+    }
+    .pfm-h-trust-item .ic {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 44px; height: 44px; border-radius: 50%;
+      background: #E4F0E2; color: #1F7A3A; font-size: 22px; flex-shrink: 0;
+    }
+    .pfm-h-trust-item .label { font-size: 13px; font-weight: 600; color: #1A1A1A; line-height: 1.35; }
+    .pfm-h-leaf { position: absolute; pointer-events: none; opacity: .08; font-size: 180px; line-height: 1; }
+    .pfm-h-leaf.l1 { top: 20px; left: -50px; transform: rotate(-25deg); }
+    .pfm-h-leaf.l2 { bottom: -40px; right: -60px; transform: rotate(20deg); opacity: .06; }
+
+    @media (max-width: 768px) {
+      .pfm-h-wrap { padding: 36px 16px 0; }
+      .pfm-h-strip { font-size: 11.5px; padding: 9px 14px; gap: 8px; margin-bottom: 8px; }
+      .pfm-h-strip .sep { display: none; }
+      .pfm-h-strip .txt { gap: 4px 10px; }
+      .pfm-h-title { font-size: clamp(20px, 5.2vw, 28px); margin-bottom: 12px; line-height: 1.35; }
+      .pfm-h-sub { font-size: clamp(13px, 3.6vw, 16px); margin-bottom: 10px; gap: 6px; }
+      .pfm-h-sub .x { width: 20px; height: 20px; }
+      .pfm-h-sub .x svg { width: 12px; height: 12px; }
+      .pfm-h-avatars-pill { padding: 6px 12px; margin-bottom: 8px; }
+      .pfm-h-avatar { width: 26px; height: 26px; margin-left: -8px; }
+      .pfm-h-rating { font-size: 13px; gap: 6px; margin-bottom: 18px; }
+      .pfm-h-rating .stars { font-size: 15px; }
+      .pfm-h-cta { padding: 14px 20px; font-size: 15.5px; gap: 10px; border-radius: 14px; margin-bottom: 10px; max-width: 360px; }
+      .pfm-h-microcopy { font-size: 11.5px; margin-bottom: 20px; text-align: center; padding: 0 8px; }
+      .pfm-h-trust { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+      .pfm-h-trust-item { gap: 6px; padding: 12px 6px; }
+      .pfm-h-trust-item .ic { width: 34px; height: 34px; }
+      .pfm-h-trust-item .ic svg { width: 16px; height: 16px; }
+      .pfm-h-trust-item .label { font-size: 11.5px; line-height: 1.3; }
+      .pfm-h-leaf { font-size: 90px; opacity: .05; }
+      .pfm-h-leaf.l1 { top: 10px; left: -30px; }
+      .pfm-h-leaf.l2 { bottom: -20px; right: -30px; }
+    }
+
+    @media (max-width: 380px) {
+      .pfm-h-wrap { padding: 28px 12px 0; }
+      .pfm-h-title { font-size: clamp(19px, 5.4vw, 24px); }
+      .pfm-h-avatars-pill { padding: 5px 10px; }
+      .pfm-h-rating { font-size: 12px; }
+      .pfm-h-rating .stars { font-size: 14px; }
+      .pfm-h-trust { gap: 5px; }
+      .pfm-h-trust-item { padding: 10px 4px; }
+      .pfm-h-trust-item .ic { width: 30px; height: 30px; }
+      .pfm-h-trust-item .ic svg { width: 14px; height: 14px; }
+      .pfm-h-trust-item .label { font-size: 10.5px; }
+    }
+  </style>
+
+  <div class="pfm-h-strip">
+    <span class="pulse"></span>
+    <span class="txt">
+      <span>🥭 ফ্রি হোম ডেলিভারি</span>
+      <span class="sep">•</span>
+      <span>শুধুমাত্র <b>আজকের জন্য</b></span>
+    </span>
+  </div>
+
+  <div class="pfm-h-wrap">
+    <span class="pfm-h-leaf l1">🥭</span>
+    <span class="pfm-h-leaf l2">🌿</span>
+
+    <h1 class="pfm-h-title">
+      <span class="line">চাঁপাইনবাবগঞ্জের বাগান থেকে আপনার ঘরে</span>
+      <span class="line"><span class="green">ফরমালিন মুক্ত</span> <span class="hl">হিমসাগর আম</span></span>
+    </h1>
+
+    <p class="pfm-h-sub">
+      <span class="x" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </span>
+      <span>কোনো কেমিক্যাল দিয়ে পাকানো নয়</span>
+    </p>
+
+    <!-- Avatar pill — only avatars -->
+    <div class="pfm-h-avatars-pill">
+      <span class="pfm-h-avatars">
+        <img class="pfm-h-avatar" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCABAAEADASIAAhEBAxEB/8QAGwAAAwEBAAMAAAAAAAAAAAAAAwQFBgEAAgf/xAAwEAACAQMCBAMGBwEAAAAAAAABAgMABBEFEiExBiJBUWEUIjJxgZEVQmKhscHh8f/EABkBAAIDAQAAAAAAAAAAAAAAAAMEAAECBf/EACARAAICAQQDAQAAAAAAAAAAAAABAhEDBBMhMRIiQUL/2gAMAwEAAhEDEQA/APo2a8DA9CDU/Up5IbQvGcNuAzUS2vri3LyIwy555Gado5xq2kCKWY4A5k1mG8f2L3Lw2VhfXqxnDywRjaPuedE1ue6uvB12yOVkdArMnIhdwDEeuM1HsvEekaQXto9zyQg4ihjySB69KBmm4LhDODEsjdmu0rWrLWYDLaSZZDiSNhh4z5EU9mslZajFPeQ6rBaywCeIxe8Bl+eV6Htg1afUynD3KArHBOenrWsUtyNg8+PalXwpbvWubqBFcRzqWjYMAcZomaJQGyDe3rTRbD03DtU3OISfWhXF1cCAhLVZHB5bXoDNPDpzMdm4c2XOfpRC1aXI3calDLp0lhxSpkQqSen/AMs/HdHTdUSWyiVZCmxnCBxg9cCqqeH552WeeYwqeZj25f6ntS2r6KLFoGgSSRWXY0mCx3Z744KjypXURtWN6OUoyprhlyzu2R5redG3KeIo+Ngp6dO/8UxfSrwYwCMlSceld8K6JKqtc3SOu/AG4bSQOgA6gVbvPD9tPI00LmCR+ZHxIT8u30rGlkoRpovWQcp2mQLbURbjm6qAc4Bow1uDiK7XPLOMAUrrdlPplqoltOMz+6GhXIJ9PL61m2eYZ3wyRx5wOKmMn0xT3D5RzX5WNfh19Lde1b+H+jiHH2xVPQ9EltJ5Ly5ZWL/ADk/U5/amZiIrdn7KpNOQ3y31khhnQuo+Fv49KR3muzrLCpdBBiRj6Ua1g4t0pdcoMsR54/wBP7UlG7wMwljO5z7oHME48x0plHvo4ra5YZk5RzRIM4Q5/g4zVPLFI0sTstW8aRAlM4PPmc17zTiOMMcnHlUyG8KsI3UkqNwwaLdXUZjOCVORnPcZqrRnxdjd1BHf2clvIMrIvL0PY/esWlpw7iTiO5IG3YzZVcdeVbS3mVxyIPpWP8RavbaVrctvJHGpZRJukJwQf9zUboiXJ1tSRwVhsHkA5Zduv2rKzEaTK5luJc5LkMwPDB6D69h/VC/E9fsImW8dIdqhmaT3igPTl5nsP6qDdrI0Sy3F00lxIxfhd1B/Mx8z2Hl5chUjBy7Qzjj9Ram8UaqRHCsscMkmQFdhhVPRmzyBpyXRbqx0c61b3WoM6MxW9JIjcBQwbn+VjlQOuQM9cVkYGeKYTKx3q24MTk5B61pdP9u1tIrWVT7IZC6WsbFVlYdycnCr3brknqxzRFjURiXBr7HxGfYLW8vrQxb4wwk2MAc+XbFMtrmj3sYje42gdD0P3p95me3W2ULHCqhRGg93AGMfKpr+H9NkIJgCn9Jxmk3il+WLrJB9oLc63YmJRBfuki8laPBP1BHOo97pqa5exXWo23tU4QR8R24akDJGVX5+dHutJsLeXYsOBgHO45oiSoijso6VcFKL9mZm4teqP/9k=" alt="সন্তুষ্ট গ্রাহক ১">
+        <img class="pfm-h-avatar" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCABAAEADASIAAhEBAxEB/8QAGgAAAwEBAQEAAAAAAAAAAAAABAUGAwECAP/EADIQAAIBAwIDBwIFBQEAAAAAAAECAwAEEQUSEyExBiJBUWFxgRQyFSORscEzNENUoeH/xAAaAQADAAMBAAAAAAAAAAAAAAABBAUAAgMG/8QAIhEAAgICAgEFAQAAAAAAAAAAAAECEQMhEjEEEyNBceHw/9oADAMBAAIRAxEAPwCl0q3m/DwbedY2LShsvjc23un4o66juzKvCuFX8lBgv1bcMn9M0BbHT4tItppbhzHKJeGyx4yGG08q96pc6fDd28M0sivNCiRhVzuG4EfORUt9/hRvbNLFcy3vl9S1F7KysIJUe6aWMpxZy6g9cGjNleg8edYo/REzxvJIw2V3hkgnwFbbK+d4orZnd1VSwwc9a6SzcVZzjjt0ZqmI5PXH701CBLdQFCry5CkL6lFwJOHxABtywwD1PnVFJ/bR/HX2qb5eVZGkn/aHcGNw2yZZi2l2pbSFY/62P6VKu0Ot6bYazY2t3pS3M7opifOOH3sY+DTDU9QubeYpBk8IkNtQkE+PP09KWdotOm1CIaxBEnEtQqHchLSLuB7vl1qZh9yTVdFCU1TopJLqNH2t92M+lJ9S7T21krLHLEzqOYaUKc+1JO0d2BOXW4fcTjarY6+XxUjqdxpafULd2QhvWwk3FJDOnVT6HAGSOdUsfqQikxaUccpssrvtBLqEAmFvK1sR1ilI9845HnQNnJeXKtJbsFRAWy8oTl6Z61zspqCDs9C0UU4gEki8LcQpGeX/AD+a31GRH1aezjgSKDilAE5kAcuQ+KE5ybpo1jGK6Y80uxln0+SW6u0VHCNhSGIHPr5VaSDECD2/ao6+0jV7maT6eO14DiERF22sQqnOfk1YS5EKjof/ACluXI6VskrVJba2h0yOKQWsYZ0DZY53A/cfc1gbuV9P1RbUNtt5CyxZxyVcnHuT09qaJMrg4IwOvOsvpbMRSoIlUFe/g48ObreEuLbrYXtV8E32Z0mLU9Ojv9SgZ5XkZlSXkOvUjxHgM+VY9qOwses6o1+s+1pCMjHoB/FUluBCbGAEtw0xlj92F6minBb7jjnnninrbFXSeuhVoekjRNNS3dg2wHJo5Ns8U8Cwrx5om4U+BmI88N8HnQ9/K5TaD161jZXZ4kcqttEWVZiM48P3rWduIY6Y4vIp20u2gDBpYdm9mPXA5nJ9actdwSRJiTHuCKQwRvklZDz5t3if+V0TpHNwGl3uRnDdQPP0qdTQ1ohbNtXS3V1wkpIPePU56sPPHhTASapPcRRTXEZR5Nx2KT1I7vM9K9b+7uzyIzy8a308GXUYQR0bd+gzVJ7YmtDiIbtTJ8I42I+cCiJHIHIUIrn8UkQeEGenm1ep2K5G7AA9aIQW4ffJis7KFW0y5XAH50mfHn1rrE8juUk+Ve7cMmnTA/5ZWK48uQ/isAIvrpQJzvcyBuMMMeY82/Tp7UXBci2ijaGQ3EsoyGJ7zLkZOT4CgbRS9vulLJOx3MVbx864gEchit32spUSEnmB1wPeg0jFZ//Z" alt="সন্তুষ্ট গ্রাহক ২">
+        <img class="pfm-h-avatar" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCABAAEADASIAAhEBAxEB/8QAGwAAAwEAAwEAAAAAAAAAAAAABAUGAwABAgf/xAA2EAACAQMDAQUDCgcAAAAAAAABAgMABBEFEiExBhNBUWEigbEHFCMyQlJxkaHwM3JzwdHh8f/EABkBAAMBAQEAAAAAAAAAAAAAAAIDBAABBf/EACERAAICAQQDAQEAAAAAAAAAAAABAhEDEhMhMQQiQWHB/9oADAMBAAIRAxEAPwCnMWVj/qD4GhtWurfSImvLptsaKBx1Y54A9aa7BtT0cVIfKcrCxsl5CF2J/EDj4mg0j07ZIan2o1HUrl1ErrBuykKnp+OOtZ2XaHWrKQSosrIpywIOPXNU+g6Vb2cEbCFVkZQSz/WPvqiFrE6nCKQeuOaDcXSQ7bX0XaB2ktdZDWxQw3IXdg9HHjiqBoz3Q444qKuNNj0rtRp+oW0ZiRrhY5VHQhvZyPzr6UlorxqhIHHJJxRUnyhUlToTyQkKzDPhx4UPeW6XFusUi5VmHB6Z6jNU1xpYhiBYocp54zS97RSqY++OtbSBaNSvsjH3qR9tbZbuzggK8hxLnGeAeR78/pT4D2MZ+1Q2s2DXiIyNhkjY486070+ocK1ckbqNlfSIHtRGRjjcu7I/OtLePULbS7koSGBHdg9R+NG/OWjtFIJYY6DrQMmovHDJGswVGI/ixHK493xqdXVFVKzHQ4ri91W1hvYnwJQxJbcAcZomaJQGyDe3rTRbD03DtU3OISfWhXF1cCAhLVZHB5bXoDNPDpzMdm4c2XOfpRC1aXI3calDLp0lhxSpkQqSen/ACs/HdHTdUSWyiVZCmxnCBxg9cCqqeH552WeeYwqeZj25f6ntS2r6KLFoGgSSRWXY0mCx3Z744KiHkQKpNSjjbTdFgCWsPkM5BKMQfvWmtrW0YCSbbEdoBJLLxyB1Pb+aTVJpvVnEkqiOJkXc5AwM9fA/wCZqzJ/bR/HX2qa3HoR+aMmLfWb2DULq4W7lMhBHzHOO/jQkELxXpw7xqZn+pT4jnl/RVbBHLdOzSuBsZVz5Zqz0mORbbbHLGgaTDByM9Bzmo3SN6Oib2UeZLVlYuqFlJ+i4rE6lqEelXFzqGnPJDOGQiVcblYDO0+IIzS8FidReQLEVXGCOm0VW6n+8e4JlKtFExjjcDqQQCPHjmjvX0dUHuXXkh/uLeSRnMKxlSTtHTJ61Ry7RXNg0ot7kxHYCMDC5B4z88V1o8sV+J5bWeGIkEAsQOf/wBNcf8AUjZrm2jt+QL8MCSMVTGb6TLGEVtHPknt7W3mK7y0nUjsckY/0ab20skVsFEmI92CA3Q9eR/mqy2vFnEEcMW0qvtAbqDj/c59afsriO3tIlluY45JQNgJBdxjoM9PpRBN6ObW9mBa4S+ku7oOtzJhJCMDyp3fDdY3Dm2TezDA5c449KSWOW1fEFwuGDFzkcsc5p1bSH6V7e3EhRV5Y5AjfjAz9PNSNuSI2ltodMjikFrGGdA2WOdwP3H3NY+7lXTdQe1kbbbylljzx2JOBR5hG9x7QIB5HrVM21zGVQDGeMfGmuYqRNPijJ6rg/u/XoTk/sMY9MjJ8jWlR9rQOXUlBwFJ/dOIpBGNwwVA8PmvEpFdUJIHO5m9T8qW5E+WLJ+kMP5X/9k=" alt="সন্তুষ্ট গ্রাহক ৩">
+        <img class="pfm-h-avatar" src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAoHBwgHBgoICAgLCgoLDhgQDg0NDh0VFhEYIx8lJCIfIiEmKzcvJik0KSEiMEExNDk7Pj4+JS5ESUM8SDc9Pjv/2wBDAQoLCw4NDhwQEBw7KCIoOzs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozs7Ozv/wAARCABAAEADASIAAhEBAxEB/8QAGwAAAQUBAQAAAAAAAAAAAAAABwIDBAUGAQD/xAAtEAACAQMDAwMDAwUAAAAAAAABAgMABBEFEiExQVEGE2FxgZEUIqEVIyXh8f/EABgBAAMBAQAAAAAAAAAAAAAAAAIEBQMB/8QAIhEAAQQCAgIDAQAAAAAAAAAAAQACAxEEEiExIkEFYYHR/9oADAMBAAIRAxEAPwArFa5inCMUkimAVjSRiknAGTxinCKHms3k/qW/uoYLloLOzcxEKx/uMPOKGSURt2KOKIyO1C3+BXcChLpnqS69LXa+5O81rvxPCzEgLnG5c9COtFtCrKGUhlYZBHcV1kge2wuSxOjdq5exXcV6ugUVoKTtIrxaklqAFHSavJXgs55o0LvHGzKo7kDIFCDQbddQ0K7N3dvaTLdmaTbjLbscH8Gi3fTCGylla4FuEXcZSu7b9u9CpdPsdIu7jU7u/E0V6d8XtIQXA7MCPPbFKZZGlXynsJjttgLHSq7pLOPW5bqKWSRY7lQIXAORx5ov6EJl09UmbcV4+h7j7UG5dGuvU0xjtLeW1WVg5LKFQjyR1oqaVqY0rR4LfU7h5poYwJJtoG7HGcfgUrjZMEbqe7lbZsEjj4t4Wjr2ahWepWuoW4uLWZZYz3B6HwfmnjMPNVA8EWCpepBorrS8UhpwO9Zr+tTuMe6m4dQq4xUefVpFZRvJLcAbsZ+9Q5fl42HVgJTIhPZVh6mvrY6c9nMkrmYZUR8Zwc9ftWIu7/Tr7V9KsbK4jmWNlQoOcD5q/S9kulL7GYRtnd185xVHaXFvd+qfeLRottEZSxwACeBk/ek3ZLpmOkeOfX0q+KKjDW9d/q1lkDDcSzPglxlR4GcKPxz96rvUUcN1YGGWBp1dNxCuUwRnHPnNSWlTYpQl8sCcHtjzVbqWooMh5VCqMBfA56/PNTsWI7bFNPFm1J9GX1taaObSFuY2JZSeVz5q8fVQCBwCR9aGOgXn+Yv1jIw6bgQehH/av01VjbtEQRkABs9MduaZyH5LH6sea/ql5AYJLI7UNLyTbhywbceBxximrm6YmQMWDJxg8/z9KrkuBlGJDIq/uxkfSo7zuLxmUftHKORkY8VsIBdpLY9LRaddx204aSR/lByMefn/AHUnX7WSbT1ew0ovM7q7b8AkHPb8Vn4p0/ULuk5LCPzjv0+KJkdt7kiu5yT0B6UtNO7Hc2ubVDFPiQelj0i1SSyQ3UotQFA2hMngfUVl9Y0+4Czy/qJHWIAgMu3cep4oo3VhHPdrEuPbXGQOjHwfgdfxWQvLd5rq8hfkpIzc9AhHB/FFDkm7KoNAk4WW0WAxTmZDuXlTj5GQauFmMbB923PIHaqKwYwXksB52HGPIB6fg1Pe4HvguGUswBA6/wAfFPStLnlTs9tFjh7C/9k=" alt="সন্তুষ্ট গ্রাহক ৪">
+      </span>
+    </div>
+
+    <!-- Stars + customer count — separate element -->
+    <div class="pfm-h-rating">
+      <span class="stars">★★★★★</span>
+      <span><b>৩৩,০০০+</b> সন্তুষ্ট গ্রাহক</span>
+    </div>
+
+    <br>
+
+    <!-- 👇 এখানে YOUR_CHECKOUT_URL জায়গায় আপনার WooCommerce/চেকআউট পেজের লিংক বসান -->
+    <a id="#order" href="#order" class="pfm-h-cta">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.5"></circle><circle cx="18" cy="21" r="1.5"></circle><path d="M2.5 3h2.6l2.6 12.3a2 2 0 0 0 2 1.7h8.1a2 2 0 0 0 2-1.5L21.5 7H6.2"></path></svg>
+      <span>অর্ডার করতে চাই</span>
+      <span class="arr">→</span>
+    </a>
+
+    <div class="pfm-h-microcopy">
+      <span class="lock">🔒</span> অগ্রিম পেমেন্ট লাগবে না • ক্যাশ অন ডেলিভারি
+    </div>
+
+    <div class="pfm-h-trust">
+      <div class="pfm-h-trust-item">
+        <span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg></span>
+        <span class="label">ফ্রি হোম ডেলিভারি</span>
+      </div>
+      <div class="pfm-h-trust-item">
+        <span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></span>
+        <span class="label">ক্যাশ অন ডেলিভারি</span>
+      </div>
+      <div class="pfm-h-trust-item">
+        <span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span>
+        <span class="label">ফরমালিন-মুক্ত</span>
+      </div>
+    </div>
+  </div>
+</section>
