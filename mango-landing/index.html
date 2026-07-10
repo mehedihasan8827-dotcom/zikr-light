@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>আম্রপালি আম — ল্যান্ডিং পেজ</title>
+<!--
+  ═══════════════════════════════════════════════════════════════
+  কাস্টমাইজ করার জায়গা:
+  1. ব্র্যান্ড নাম    → নিচে JS CONFIG-এ BRAND বদলান (সব জায়গায় বসে যাবে)
+  2. বিক্রেতার নাম   → CONFIG-এ SELLER
+  3. WhatsApp নম্বর → CONFIG-এ WHATSAPP (যেমন: 8801XXXXXXXXX)
+  4. দাম            → CONFIG-এ PRICES
+  5. ছবি            → প্রতিটা <img class="ph"> ট্যাগের src-এ নিজের ছবির
+                       লিংক বসান (এখন SVG প্লেসহোল্ডার আছে)
+  ═══════════════════════════════════════════════════════════════
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --green-dark:#14532d;
+    --green:#16a34a;
+    --green-bright:#22c55e;
+    --green-lime:#4ade80;
+    --green-card:#eaf7e0;
+    --green-card-soft:#f1f9e9;
+    --yellow:#f5b301;
+    --yellow-deep:#eba800;
+    --orange:#f5a623;
+    --orange-logo:#f59e0b;
+    --ink:#1c1c1c;
+    --paper:#fafbf7;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Hind Siliguri',sans-serif;
+    color:var(--ink);
+    background:#dfe5da;
+  }
+  .page{
+    max-width:480px;
+    margin:0 auto;
+    background:var(--paper);
+    overflow-x:hidden;
+    box-shadow:0 0 30px rgba(0,0,0,.25);
+  }
+  .display{font-family:'Baloo Da 2','Hind Siliguri',sans-serif}
+  img{max-width:100%;display:block}
+
+  /* ── আউটলাইন টেক্সট এফেক্ট (হিরো হেডলাইনের মতো) ── */
+  .stroke{
+    text-shadow:
+      -2px -2px 0 #000, 2px -2px 0 #000,
+      -2px  2px 0 #000, 2px  2px 0 #000,
+      -3px  0   0 #000, 3px  0   0 #000,
+       0   -3px 0 #000, 0    3px 0 #000,
+       0    5px 8px rgba(0,0,0,.55);
+  }
+
+  /* ═════════ 1. হিরো ═════════ */
+  .hero{
+    position:relative;
+    background:
+      radial-gradient(ellipse 90% 55% at 50% -5%, rgba(190,242,100,.28), transparent 60%),
+      radial-gradient(ellipse 70% 45% at 15% 35%, rgba(34,197,94,.30), transparent 65%),
+      radial-gradient(ellipse 70% 45% at 85% 30%, rgba(21,128,61,.45), transparent 65%),
+      linear-gradient(180deg,#0c2e14 0%,#123f1c 30%,#1b5527 60%,#2a6e33 100%);
+    padding:26px 18px 0;
+    text-align:center;
+  }
+  .hero::before{ /* পাতার আভা */
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      radial-gradient(circle 3px at 12% 18%, rgba(190,242,100,.5) 0 2px, transparent 3px),
+      radial-gradient(circle 3px at 82% 12%, rgba(190,242,100,.4) 0 2px, transparent 3px),
+      radial-gradient(circle 2px at 65% 28%, rgba(190,242,100,.35) 0 1.5px, transparent 2px),
+      radial-gradient(circle 2px at 30% 40%, rgba(190,242,100,.3) 0 1.5px, transparent 2px);
+  }
+  .hero-logo{
+    display:inline-flex;align-items:center;gap:7px;
+    font-family:'Baloo Da 2',sans-serif;font-weight:800;font-size:27px;
+    color:var(--orange-logo);
+    text-shadow:-1.5px -1.5px 0 #fff,1.5px -1.5px 0 #fff,-1.5px 1.5px 0 #fff,1.5px 1.5px 0 #fff,0 3px 5px rgba(0,0,0,.5);
+    margin-bottom:16px;position:relative;z-index:1;
+  }
+  .hero-logo .mango{font-size:30px;text-shadow:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}
+  .hero-h1{
+    position:relative;z-index:1;
+    font-size:41px;line-height:1.32;font-weight:800;
+  }
+  .hero-h1 .l1{
+    display:block;position:relative;
+    background:linear-gradient(180deg,#d9f99d,#4ade80 55%,#22c55e);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(-2px -2px 0 #000) drop-shadow(2px -2px 0 #000) drop-shadow(-2px 2px 0 #000) drop-shadow(2px 2px 0 #000) drop-shadow(0 5px 6px rgba(0,0,0,.5));
+  }
+  .hero-h1 .crown{
+    position:absolute;top:-20px;right:16%;font-size:26px;
+    color:#fff;transform:rotate(18deg);
+    filter:drop-shadow(1px 1px 0 #000);
+  }
+  .hero-h1 .l2{
+    display:block;
+    background:linear-gradient(180deg,#fef08a,#fbbf24 55%,#f59e0b);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(-2px -2px 0 #000) drop-shadow(2px -2px 0 #000) drop-shadow(-2px 2px 0 #000) drop-shadow(2px 2px 0 #000) drop-shadow(0 5px 6px rgba(0,0,0,.5));
+  }
+  .hero-h1 .l2 .em{filter:none;-webkit-text-fill-color:initial}
+  .stars{
+    position:relative;z-index:1;
+    display:inline-block;background:#fff;border-radius:10px;
+    padding:9px 34px 26px;margin:20px 0 -14px;
+    box-shadow:0 4px 10px rgba(0,0,0,.25);
+  }
+  .stars span{color:#f6ad3c;font-size:26px;letter-spacing:9px}
+  .hero-sub{
+    position:relative;z-index:2;
+    font-size:29px;line-height:1.5;font-weight:800;color:#fff;
+  }
+  .hero-sub .y{color:#fbbf24}
+  .hero-card{
+    position:relative;z-index:1;
+    background:#fff;border-radius:16px;
+    padding:20px 18px;margin:22px 2px 26px;
+    font-size:23px;line-height:1.55;font-weight:500;
+    box-shadow:0 6px 16px rgba(0,0,0,.3);
+  }
+  .hero-card b{font-weight:700}
+  .btn{
+    display:inline-block;border:none;cursor:pointer;
+    font-family:'Hind Siliguri',sans-serif;
+    background:linear-gradient(180deg,#fdc426,var(--yellow) 60%,var(--yellow-deep));
+    color:var(--ink);font-size:24px;font-weight:700;
+    padding:11px 38px;border-radius:10px;
+    box-shadow:0 5px 12px rgba(0,0,0,.35), inset 0 -3px 0 rgba(0,0,0,.12);
+    text-decoration:none;position:relative;z-index:1;
+    transition:transform .12s ease;
+  }
+  .btn:active{transform:scale(.96)}
+  .hero-photo{margin-top:24px;position:relative;z-index:1}
+  .hero-photo img{width:100%}
+
+  /* ── ছবির প্লেসহোল্ডার ── */
+  .ph{background:#e5ece0;object-fit:cover}
+
+  /* ═════════ গ্রিড-পেপার সেকশন ═════════ */
+  .paper{
+    background:
+      linear-gradient(rgba(120,140,120,.13) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(120,140,120,.13) 1px, transparent 1px);
+    background-size:34px 34px;
+    background-color:var(--paper);
+    padding:0 18px;
+  }
+
+  /* ═════════ 2. প্রোডাক্ট ═════════ */
+  .product{padding-top:86px;padding-bottom:34px;text-align:center}
+  .banner{
+    position:relative;
+    background:linear-gradient(180deg,#a3e26b,#8bd94f);
+    border-radius:22px;
+    padding:52px 20px 26px;
+    box-shadow:0 8px 18px rgba(60,120,40,.25);
+  }
+  .banner .badge{
+    position:absolute;top:-34px;left:50%;transform:translateX(-50%);
+    width:68px;height:68px;border-radius:50%;
+    background:var(--yellow);
+    display:flex;align-items:center;justify-content:center;
+    font-size:30px;
+    box-shadow:0 4px 10px rgba(0,0,0,.2);
+  }
+  .banner .t1{
+    font-size:29px;font-weight:700;color:#123c14;
+    text-shadow:0 1px 0 rgba(255,255,255,.4);
+    margin-bottom:14px;
+  }
+  .banner .t2{
+    background:#fff;border-radius:12px;
+    font-size:37px;font-weight:800;color:#111;
+    padding:8px 12px;line-height:1.35;
+    box-shadow:0 3px 8px rgba(40,90,30,.25);
+  }
+  .product .basket{margin:26px auto 10px;width:92%}
+  .features{
+    background:linear-gradient(180deg,var(--green-card-soft),var(--green-card));
+    border:1px solid #d5ecc2;border-radius:20px;
+    padding:28px 22px;margin-top:26px;text-align:left;
+    box-shadow:0 6px 14px rgba(80,130,60,.12);
+  }
+  .feature{display:flex;gap:16px;align-items:flex-start}
+  .feature + .feature{margin-top:26px}
+  .feature .icon{
+    flex:0 0 74px;width:74px;height:74px;border-radius:16px;
+    background:linear-gradient(180deg,#3e9e3e,#2e7d32);
+    display:flex;align-items:center;justify-content:center;
+    font-size:38px;
+    box-shadow:0 4px 8px rgba(40,90,30,.3);
+  }
+  .feature h3{
+    font-size:24px;font-weight:700;color:#15803d;margin-bottom:4px;
+  }
+  .feature p{font-size:19.5px;line-height:1.55;color:#222}
+  .feature p b{font-weight:700}
+  .center-btn{text-align:center;margin:30px 0 6px}
+
+  /* ═════════ 3. সোশ্যাল প্রুফ ═════════ */
+  .proof{padding-top:44px;padding-bottom:40px;text-align:center}
+  .proof-h{font-size:41px;line-height:1.3;font-weight:800}
+  .proof-h .g{color:#3db54a}
+  .proof-h .d{color:#2b2b2b}
+  .proof-badge-wrap{
+    position:relative;margin:26px 0 30px;
+    background:linear-gradient(180deg,#f3fbe9,#e9f6dc);
+    border-radius:18px;padding:40px 14px 20px;
+    border:1px solid #ddefcc;
+  }
+  .proof-pill{
+    position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+    display:flex;align-items:center;gap:9px;
+    background:#fff;border:2px solid #cfe9b8;border-radius:999px;
+    padding:8px 16px;white-space:nowrap;
+    box-shadow:0 5px 12px rgba(70,120,50,.18);
+  }
+  .avatars{display:flex;align-items:center;flex:0 0 auto}
+  .avatars img{
+    width:36px;height:36px;border-radius:50%;
+    border:2px solid #fff;object-fit:cover;
+  }
+  .avatars img + img{margin-left:-10px}
+  .count{
+    flex:0 0 auto;
+    width:44px;height:44px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#2f9e44,#1b6e2c);
+    color:#fff;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;line-height:1.05;
+    font-weight:700;margin-left:-10px;border:2px solid #fff;
+  }
+  .count .n{font-size:15px}
+  .count .l{font-size:10px}
+  .proof-pill .lbl{
+    flex:0 0 auto;
+    font-size:17px;font-weight:700;color:#123c14;line-height:1.25;text-align:left;
+  }
+  .proof-text{
+    font-size:23.5px;line-height:1.62;color:#222;font-weight:500;
+    padding:6px 2px 2px;
+  }
+  .proof-text b{font-weight:800}
+
+  /* ═════════ 4. গ্যালারি ═════════ */
+  .gallery{padding-top:26px;padding-bottom:38px;text-align:center}
+  .gallery-h{font-size:39px;line-height:1.32;font-weight:800;margin-bottom:26px}
+  .gallery-h .g{color:#3db54a}
+  .gallery-h .d{color:#2b2b2b}
+  .carousel-wrap{position:relative;margin:0 -18px}
+  .carousel{
+    display:flex;gap:10px;overflow-x:auto;
+    scroll-snap-type:x mandatory;padding:0 18px;
+    scrollbar-width:none;
+  }
+  .carousel::-webkit-scrollbar{display:none}
+  .carousel img{
+    flex:0 0 76%;height:430px;border-radius:6px;
+    scroll-snap-align:center;object-fit:cover;
+  }
+  .arrow{
+    position:absolute;top:50%;transform:translateY(-50%);
+    width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;
+    background:rgba(255,255,255,.55);color:#333;font-size:20px;
+    display:flex;align-items:center;justify-content:center;z-index:2;
+  }
+  .arrow.prev{left:8px}.arrow.next{right:8px}
+  .gallery .center-btn{margin-top:34px}
+
+  /* ═════════ 5. প্রাইসিং ═════════ */
+  .pricing{padding-top:30px;padding-bottom:44px;text-align:center}
+  .pricing-h{font-size:44px;line-height:1.3;font-weight:800;margin-bottom:26px}
+  .pricing-h .d{color:#2b2b2b}
+  .pricing-h .g{color:#3db54a}
+  .price-box{
+    background:linear-gradient(180deg,#f0f9e4,#e7f4d8);
+    border:1px solid #dcefc9;border-radius:18px;
+    padding:16px;display:flex;gap:14px;
+  }
+  .price-card{
+    flex:1;background:#fff;border-radius:12px;
+    padding:24px 10px 26px;
+    box-shadow:0 3px 8px rgba(80,120,60,.12);
+  }
+  .price-card .kg{font-size:31px;font-weight:800;color:#1c1c1c}
+  .price-card hr{
+    border:none;border-top:1.5px solid #d8c86a;
+    margin:14px 18px;
+  }
+  .price-card .tk{font-size:29px;font-weight:800;color:#2e9e44}
+  .pricing .center-btn{margin-top:30px}
+
+  /* ═════════ 6. চেকআউট ═════════ */
+  .checkout-zone{
+    background:linear-gradient(180deg,#14532d,#166534);
+    border-radius:26px 26px 0 0;
+    padding:30px 14px 44px;
+  }
+  .checkout-title{
+    text-align:center;color:#fff;font-size:27px;font-weight:700;
+    margin-bottom:20px;
+  }
+  .checkout{
+    background:#fff;border-radius:20px;
+    padding:24px 20px 30px;
+    box-shadow:0 10px 24px rgba(0,0,0,.25);
+  }
+  .checkout h4{font-size:21px;font-weight:700;margin-bottom:12px}
+  .packs{display:flex;gap:12px;margin-bottom:22px}
+  .pack{
+    flex:1;border:2px solid #dde5d8;border-radius:12px;
+    padding:14px 8px;text-align:center;cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .pack input{display:none}
+  .pack .pk{font-size:22px;font-weight:700}
+  .pack .pt{font-size:18px;color:#2e9e44;font-weight:700;margin-top:2px}
+  .pack.active{border-color:#2e9e44;background:#f2faee}
+  .field{margin-bottom:16px}
+  .field label{
+    display:block;font-size:18px;font-weight:600;margin-bottom:6px;color:#333;
+  }
+  .field input,.field textarea{
+    width:100%;border:1.5px solid #d9e0d4;border-radius:10px;
+    padding:12px 14px;font-size:18px;font-family:'Hind Siliguri',sans-serif;
+    outline:none;background:#fbfdf9;
+  }
+  .field input:focus,.field textarea:focus{border-color:#2e9e44}
+  .sumrow{
+    display:flex;justify-content:space-between;
+    font-size:19px;color:#444;padding:7px 0;
+  }
+  .sumrow.total{
+    border-top:1.5px dashed #c9cfc4;margin-top:8px;padding-top:16px;
+    font-size:23px;font-weight:700;color:#111;
+  }
+  .sumrow.total .amt{color:#1e7d36;font-weight:800}
+  .cod{
+    background:#eef4ef;border-radius:14px;
+    padding:20px 18px;margin:22px 0 26px;
+  }
+  .cod .cod-t{font-size:22px;font-weight:700;color:#222;margin-bottom:14px}
+  .cod .bubble{
+    position:relative;background:#fff;border-radius:10px;
+    padding:16px 16px;font-size:19px;line-height:1.6;color:#333;
+  }
+  .cod .bubble::before{
+    content:"";position:absolute;top:-10px;left:36px;
+    border-left:11px solid transparent;border-right:11px solid transparent;
+    border-bottom:11px solid #fff;
+  }
+  .place-btn{
+    width:100%;border:none;cursor:pointer;
+    background:linear-gradient(180deg,#ffb733,var(--orange) 55%,#ec9416);
+    color:#1a1a1a;font-family:'Hind Siliguri',sans-serif;
+    font-size:24px;font-weight:700;
+    padding:20px 10px;border-radius:14px;
+    display:flex;align-items:center;justify-content:center;gap:12px;
+    box-shadow:0 6px 14px rgba(0,0,0,.22), inset 0 -3px 0 rgba(0,0,0,.1);
+  }
+  .place-btn:active{transform:scale(.98)}
+  .form-msg{
+    display:none;margin-top:16px;text-align:center;
+    background:#f2faee;border:1.5px solid #bfe3ab;border-radius:10px;
+    padding:12px;font-size:18px;color:#1e6b30;font-weight:600;
+  }
+
+  /* ═════════ 7. ফুটার ═════════ */
+  .footer{
+    background:linear-gradient(180deg,#166534,#15803d);
+    text-align:center;padding:40px 22px 34px;
+  }
+  .footer-logo{
+    display:inline-flex;align-items:center;gap:7px;
+    font-family:'Baloo Da 2',sans-serif;font-weight:800;font-size:28px;
+    color:var(--orange-logo);
+    text-shadow:-1.5px -1.5px 0 #fff,1.5px -1.5px 0 #fff,-1.5px 1.5px 0 #fff,1.5px 1.5px 0 #fff;
+    margin-bottom:18px;
+  }
+  .footer-logo .mango{font-size:30px;text-shadow:none}
+  .footer .f1{color:#fff;font-size:26px;font-weight:800;line-height:1.4}
+  .footer .f2{color:#e4f4e6;font-size:19px;margin-top:8px;line-height:1.55}
+  .chat-box{
+    display:block;margin:26px auto 0;max-width:340px;
+    border:1.5px solid rgba(255,255,255,.55);border-radius:14px;
+    padding:16px 18px;color:#fff;text-decoration:none;
+  }
+  .chat-box .c1{font-size:19px;font-weight:600}
+  .chat-box .c2{
+    margin-top:8px;display:inline-flex;align-items:center;gap:9px;
+    font-size:21px;font-weight:700;
+  }
+  .chat-box .wa{
+    width:26px;height:26px;border-radius:50%;
+    border:2px solid #fff;display:inline-flex;
+    align-items:center;justify-content:center;font-size:13px;
+  }
+  .copyright{
+    background:#0b3d1e;color:#dfeee2;text-align:center;
+    padding:24px 18px 30px;font-size:18px;line-height:1.7;
+  }
+  .copyright b{color:#fff}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ═════════ 1. হিরো ═════════ -->
+  <section class="hero">
+    <div class="hero-logo"><span class="mango">🥭</span><span class="brand-name">আপনার ব্র্যান্ড</span></div>
+
+    <h1 class="hero-h1 display">
+      <span class="l1">আমের রানী খ্যাত<span class="crown">♛</span></span>
+      <span class="l2">নওগাঁর <span class="em">🥭</span> আম্রপালি আম!</span>
+    </h1>
+
+    <div class="stars"><span>★ ★ ★ ★ ★</span></div>
+
+    <div class="hero-sub display stroke">
+      মুখে দিয়ে হারিয়ে যান এক অসাধারন<br>
+      <span class="y">সুমিষ্ট ও রসালো স্বাদের রাজ্যে!</span>
+    </div>
+
+    <div class="hero-card">
+      <b>কোনো প্রকার অগ্রীম ছাড়াই</b><br>
+      বাগান থেকে সরাসরি আপনার ঠিকানায়
+    </div>
+
+    <a class="btn" href="#order">অর্ডার করুন</a>
+
+    <div class="hero-photo">
+      <!-- 📷 কৃষক/বাগানের ছবি — src বদলে নিজের ছবি দিন -->
+      <img class="ph" alt="বাগানে আম হাতে চাষির ছবি" width="480" height="520"
+        src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='520'%3E%3Crect width='480' height='520' fill='%231b5527'/%3E%3Crect x='14' y='14' width='452' height='492' fill='none' stroke='%23bef264' stroke-width='3' stroke-dasharray='14 10' rx='16'/%3E%3Ctext x='240' y='240' font-size='60' text-anchor='middle'%3E%F0%9F%93%B7%3C/text%3E%3Ctext x='240' y='300' font-size='26' fill='%23e9fbd0' text-anchor='middle' font-family='sans-serif'%3E%E0%A6%86%E0%A6%AA%E0%A6%A8%E0%A6%BE%E0%A6%B0 %E0%A6%9B%E0%A6%AC%E0%A6%BF %E0%A6%8F%E0%A6%96%E0%A6%BE%E0%A6%A8%E0%A7%87%3C/text%3E%3Ctext x='240' y='336' font-size='18' fill='%23c9ecb0' text-anchor='middle' font-family='sans-serif'%3E(%E0%A6%95%E0%A7%83%E0%A6%B7%E0%A6%95 / %E0%A6%AC%E0%A6%BE%E0%A6%97%E0%A6%BE%E0%A6%A8%E0%A7%87%E0%A6%B0 %E0%A6%9B%E0%A6%AC%E0%A6%BF)%3C/text%3E%3C/svg%3E">
+    </div>
+  </section>
+
+  <div class="paper">
+
+    <!-- ═════════ 2. প্রোডাক্ট ═════════ -->
+    <section class="product">
+      <div class="banner">
+        <div class="badge">♛</div>
+        <div class="t1">নিজস্ব তত্ত্বাবধায়নে বাছাইকৃত</div>
+        <div class="t2 display">প্রিমিয়াম আম্রপালি আম</div>
+      </div>
+
+      <!-- 📷 আমের ঝুড়ির ছবি -->
+      <img class="ph basket" alt="ঝুড়িতে সাজানো আম" width="440" height="330"
+        src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='440' height='330'%3E%3Crect width='440' height='330' fill='%23f2f7ec'/%3E%3Crect x='12' y='12' width='416' height='306' fill='none' stroke='%2394be74' stroke-width='3' stroke-dasharray='14 10' rx='16'/%3E%3Ctext x='220' y='150' font-size='54' text-anchor='middle'%3E%F0%9F%A5%AD%3C/text%3E%3Ctext x='220' y='205' font-size='24' fill='%23557a3d' text-anchor='middle' font-family='sans-serif'%3E%E0%A6%86%E0%A6%AE%E0%A7%87%E0%A6%B0 %E0%A6%9D%E0%A7%81%E0%A6%A1%E0%A6%BC%E0%A6%BF%E0%A6%B0 %E0%A6%9B%E0%A6%AC%E0%A6%BF %E0%A6%8F%E0%A6%96%E0%A6%BE%E0%A6%A8%E0%A7%87%3C/text%3E%3C/svg%3E">
+
+      <div class="features">
+        <div class="feature">
+          <div class="icon">🥭</div>
+          <div>
+            <h3>প্রিমিয়াম সাইজ</h3>
+            <p>মাত্র <b>৪-৫টি আম্রপালি তে ১ কেজি</b> ওজনে সমমান। আটির ব্যাস কম হওয়ায় মাংসাল অংশ বেশি থাকে।</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="icon">🍋</div>
+          <div>
+            <h3>আঁশবিহীন ও সুমিষ্ট</h3>
+            <p>অস্বস্তিকর দাঁতে আটকানোর মতো আম আম্রপালি নয় এটি। মুখে দিবেন আর মিলিয়ে যাবেন মিষ্টিতে।</p>
+          </div>
+        </div>
+        <div class="feature">
+          <div class="icon">✨</div>
+          <div>
+            <h3>শতভাগ প্রিজারভেটিভ মুক্ত</h3>
+            <p>শুধুমাত্র আপনাদের অর্ডারের পরে আমরা প্রতি স্লট রেডি করি। তাই প্রিজারভেটিভ এপ্লাইয়ের সুযোগই নেই।</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="center-btn"><a class="btn" href="#order">অর্ডার করুন</a></div>
+    </section>
+
+    <!-- ═════════ 3. সোশ্যাল প্রুফ ═════════ -->
+    <section class="proof">
+      <h2 class="proof-h display">
+        <span class="g">এই সিজনেই</span><br>
+        <span class="d">আমরা অর্জন করেছি</span>
+      </h2>
+
+      <div class="proof-badge-wrap">
+        <div class="proof-pill">
+          <div class="avatars">
+            <!-- 📷 কাস্টমারদের ছোট ছবি (৪টি) -->
+            <img class="ph" alt="কাস্টমার ১" src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' fill='%23cfe3c0'/%3E%3Ctext x='22' y='30' font-size='20' text-anchor='middle'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E">
+            <img class="ph" alt="কাস্টমার ২" src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' fill='%23bcd8aa'/%3E%3Ctext x='22' y='30' font-size='20' text-anchor='middle'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E">
+            <img class="ph" alt="কাস্টমার ৩" src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' fill='%23cfe3c0'/%3E%3Ctext x='22' y='30' font-size='20' text-anchor='middle'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E">
+            <img class="ph" alt="কাস্টমার ৪" src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' fill='%23bcd8aa'/%3E%3Ctext x='22' y='30' font-size='20' text-anchor='middle'%3E%F0%9F%91%A4%3C/text%3E%3C/svg%3E">
+            <div class="count"><span class="n">২</span><span class="l">লক্ষ+</span></div>
+          </div>
+          <div class="lbl">স্যাটিসফাইড<br>কাস্টমার্স</div>
+        </div>
+
+        <p class="proof-text">
+          আপনি সারাদেশের যে প্রান্তেই থাকুন, আস্থা রাখুন আমার
+          উপর (<span class="seller-name">আপনার নাম</span>) যে <span class="brand-name">আপনার ব্র্যান্ড</span> আপনাকে সেরাটাই
+          দিবে, কারন আম নিয়েই আমাদের এত দূর আসা,
+          আপনাদের আস্থাই এতদূর আসতে সহযোগিতা করেছে, তাই
+          মানের সাথে কোনো আপোষ নেই, শুধু সেরা আমের নিশ্চয়তা
+          পাবেন এই <b class="brand-name">আপনার ব্র্যান্ডেই</b>!
+        </p>
+      </div>
+
+      <a class="btn" href="#order">অর্ডার করুন</a>
+    </section>
+
+    <!-- ═════════ 4. গ্যালারি ═════════ -->
+    <section class="gallery">
+      <h2 class="gallery-h display">
+        <span class="g">আমাদের গার্ডেনফ্রেশ</span><br>
+        <span class="d">আম্রপালি আম গুলো দেখুন</span>
+      </h2>
+
+      <div class="carousel-wrap">
+        <button class="arrow prev" aria-label="আগের ছবি">&#10094;</button>
+        <div class="carousel" id="carousel">
+          <!-- 📷 গ্যালারির ছবি — যত খুশি <img> যোগ করুন -->
+          <img class="ph" alt="বাগানের ছবি ১" src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='430'%3E%3Crect width='360' height='430' fill='%23dcead2'/%3E%3Crect x='12' y='12' width='336' height='406' fill='none' stroke='%2394be74' stroke-width='3' stroke-dasharray='14 10' rx='10'/%3E%3Ctext x='180' y='200' font-size='50' text-anchor='middle'%3E%F0%9F%93%B7%3C/text%3E%3Ctext x='180' y='255' font-size='24' fill='%23557a3d' text-anchor='middle' font-family='sans-serif'%3E%E0%A6%97%E0%A7%8D%E0%A6%AF%E0%A6%BE%E0%A6%B2%E0%A6%BE%E0%A6%B0%E0%A6%BF %E0%A7%A7%3C/text%3E%3C/svg%3E">
+          <img class="ph" alt="বাগানের ছবি ২" src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='430'%3E%3Crect width='360' height='430' fill='%23d2e5c6'/%3E%3Crect x='12' y='12' width='336' height='406' fill='none' stroke='%2394be74' stroke-width='3' stroke-dasharray='14 10' rx='10'/%3E%3Ctext x='180' y='200' font-size='50' text-anchor='middle'%3E%F0%9F%A5%AD%3C/text%3E%3Ctext x='180' y='255' font-size='24' fill='%23557a3d' text-anchor='middle' font-family='sans-serif'%3E%E0%A6%97%E0%A7%8D%E0%A6%AF%E0%A6%BE%E0%A6%B2%E0%A6%BE%E0%A6%B0%E0%A6%BF %E0%A7%A8%3C/text%3E%3C/svg%3E">
+          <img class="ph" alt="বাগানের ছবি ৩" src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='430'%3E%3Crect width='360' height='430' fill='%23dcead2'/%3E%3Crect x='12' y='12' width='336' height='406' fill='none' stroke='%2394be74' stroke-width='3' stroke-dasharray='14 10' rx='10'/%3E%3Ctext x='180' y='200' font-size='50' text-anchor='middle'%3E%F0%9F%93%B7%3C/text%3E%3Ctext x='180' y='255' font-size='24' fill='%23557a3d' text-anchor='middle' font-family='sans-serif'%3E%E0%A6%97%E0%A7%8D%E0%A6%AF%E0%A6%BE%E0%A6%B2%E0%A6%BE%E0%A6%B0%E0%A6%BF %E0%A7%A9%3C/text%3E%3C/svg%3E">
+        </div>
+        <button class="arrow next" aria-label="পরের ছবি">&#10095;</button>
+      </div>
+
+      <div class="center-btn"><a class="btn" href="#order">অর্ডার করুন</a></div>
+    </section>
+
+    <!-- ═════════ 5. প্রাইসিং ═════════ -->
+    <section class="pricing">
+      <h2 class="pricing-h display">
+        <span class="d">দাম কি অনেক বেশি?</span><br>
+        <span class="g">একদমই না !</span>
+      </h2>
+
+      <div class="price-box">
+        <div class="price-card">
+          <div class="kg display">১২ কেজি</div>
+          <hr>
+          <div class="tk display">১,৫৬০ টাকা</div>
+        </div>
+        <div class="price-card">
+          <div class="kg display">২৪ কেজি</div>
+          <hr>
+          <div class="tk display">৩,১২০ টাকা</div>
+        </div>
+      </div>
+
+      <div class="center-btn"><a class="btn" href="#order">অর্ডার করুন</a></div>
+    </section>
+  </div>
+
+  <!-- ═════════ 6. চেকআউট ═════════ -->
+  <section class="checkout-zone" id="order">
+    <div class="checkout-title">অর্ডার করতে ফর্মটি পূরণ করুন</div>
+    <form class="checkout" id="orderForm" novalidate>
+      <h4>প্যাকেজ বাছাই করুন</h4>
+      <div class="packs">
+        <label class="pack active">
+          <input type="radio" name="pack" value="12" checked>
+          <div class="pk">১২ কেজি</div>
+          <div class="pt">১,৫৬০ টাকা</div>
+        </label>
+        <label class="pack">
+          <input type="radio" name="pack" value="24">
+          <div class="pk">২৪ কেজি</div>
+          <div class="pt">৩,১২০ টাকা</div>
+        </label>
+      </div>
+
+      <div class="field">
+        <label for="name">আপনার নাম *</label>
+        <input id="name" name="name" type="text" placeholder="সম্পূর্ণ নাম লিখুন">
+      </div>
+      <div class="field">
+        <label for="phone">মোবাইল নম্বর *</label>
+        <input id="phone" name="phone" type="tel" placeholder="01XXXXXXXXX">
+      </div>
+      <div class="field">
+        <label for="address">সম্পূর্ণ ঠিকানা *</label>
+        <textarea id="address" name="address" rows="3" placeholder="গ্রাম/বাসা, থানা, জেলা"></textarea>
+      </div>
+
+      <div class="sumrow"><span>সাবটোটাল</span><span id="subtotal">1,560৳</span></div>
+      <div class="sumrow"><span>ডেলিভারি চার্জ</span><span id="delivery">100৳</span></div>
+      <div class="sumrow total"><span>Total</span><span class="amt" id="total">1,660৳</span></div>
+
+      <div class="cod">
+        <div class="cod-t">ক্যাশ অন ডেলিভারি (COD)</div>
+        <div class="bubble">অবশ্যই আমি প্রডাক্ট হাতে পেয়ে মূল্য পরিশোধ করবো, ইন-শা-আল্লাহ।</div>
+      </div>
+
+      <button class="place-btn" type="submit">
+        <span>🔒</span> অর্ডারটি প্লেস করুন&nbsp; <span id="btnTotal">1,660৳</span>
+      </button>
+      <div class="form-msg" id="formMsg">ধন্যবাদ! অর্ডার সিস্টেম শীঘ্রই চালু হবে — এখন এটি ডেমো মাত্র।</div>
+    </form>
+  </section>
+
+  <!-- ═════════ 7. ফুটার ═════════ -->
+  <footer class="footer">
+    <div class="footer-logo"><span class="mango">🥭</span><span class="brand-name">আপনার ব্র্যান্ড</span></div>
+    <div class="f1">বিশুদ্ধতায় ভরা আমাদের প্রতিটি প্রডাক্ট</div>
+    <div class="f2">নির্দ্বিধায় অর্ডার করুন, পন্য বুঝে নিয়ে মূল্য পরিশোধ করুন</div>
+    <a class="chat-box" id="waLink" href="#" target="_blank" rel="noopener">
+      <div class="c1">প্রয়োজনে হোয়াটস-এপে লাইভ চ্যাট করুন</div>
+      <div class="c2"><span class="wa">✆</span> লাইভ চ্যাট</div>
+    </a>
+  </footer>
+  <div class="copyright">
+    © <span id="year">2026</span> <b class="brand-name">আপনার ব্র্যান্ড</b>, All Right Reserved<br>
+    Developed by 🧡 <b>Team <span class="brand-name">আপনার ব্র্যান্ড</span></b>
+  </div>
+
+</div>
+
+<script>
+/* ═══════════════ CONFIG — এখানে নিজের তথ্য বসান ═══════════════ */
+const CONFIG = {
+  BRAND:   "আপনার ব্র্যান্ড",     // ← আপনার ব্র্যান্ড/দোকানের নাম
+  SELLER:  "আপনার নাম",          // ← বিক্রেতা/মালিকের নাম
+  WHATSAPP:"",                    // ← যেমন: "8801XXXXXXXXX" (ফাঁকা থাকলে লিংক নিষ্ক্রিয়)
+  DELIVERY: 100,                  // ডেলিভারি চার্জ (টাকা)
+  PRICES:  { "12": 1560, "24": 3120 }  // প্যাকেজ অনুযায়ী দাম
+};
+/* ═══════════════════════════════════════════════════════════════ */
+
+// ব্র্যান্ড ও বিক্রেতার নাম সব জায়গায় বসানো
+document.querySelectorAll(".brand-name").forEach(el => {
+  el.textContent = el.textContent.includes("ব্র্যান্ডেই")
+    ? CONFIG.BRAND + "েই" : CONFIG.BRAND;
+});
+document.querySelectorAll(".seller-name").forEach(el => el.textContent = CONFIG.SELLER);
+document.getElementById("year").textContent = new Date().getFullYear();
+
+// WhatsApp লিংক
+const wa = document.getElementById("waLink");
+if (CONFIG.WHATSAPP) wa.href = "https://wa.me/" + CONFIG.WHATSAPP;
+else wa.addEventListener("click", e => e.preventDefault());
+
+// বাংলা সংখ্যা ফরম্যাট (স্ক্রিনশটের মতো 1,660৳ স্টাইল)
+const fmt = n => n.toLocaleString("en-US") + "৳";
+
+// প্যাকেজ বদলালে টোটাল আপডেট
+const packs = document.querySelectorAll(".pack");
+function updateTotal() {
+  const val = document.querySelector('input[name="pack"]:checked').value;
+  const sub = CONFIG.PRICES[val];
+  const total = sub + CONFIG.DELIVERY;
+  document.getElementById("subtotal").textContent = fmt(sub);
+  document.getElementById("delivery").textContent = fmt(CONFIG.DELIVERY);
+  document.getElementById("total").textContent = fmt(total);
+  document.getElementById("btnTotal").textContent = fmt(total);
+}
+packs.forEach(p => p.addEventListener("change", () => {
+  packs.forEach(x => x.classList.remove("active"));
+  p.classList.add("active");
+  updateTotal();
+}));
+updateTotal();
+
+// গ্যালারি তীর
+const car = document.getElementById("carousel");
+const step = () => car.querySelector("img").offsetWidth + 10;
+document.querySelector(".arrow.prev").addEventListener("click", () => car.scrollBy({left:-step(), behavior:"smooth"}));
+document.querySelector(".arrow.next").addEventListener("click", () => car.scrollBy({left: step(), behavior:"smooth"}));
+
+// ফর্ম সাবমিট — এখন শুধু ডিজাইন, ব্যাকএন্ড পরে যুক্ত হবে
+document.getElementById("orderForm").addEventListener("submit", e => {
+  e.preventDefault();
+  document.getElementById("formMsg").style.display = "block";
+});
+</script>
+</body>
+</html>
