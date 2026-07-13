@@ -1,0 +1,314 @@
+<!-- ============================================================
+     এক্সিট-ইনটেন্ট ডিসকাউন্ট পপআপ (Elementor HTML উইজেট)
+     ------------------------------------------------------------
+     ইন্সটল: Elementor পেজের একদম নিচে একটি "HTML" উইজেট যোগ করে
+     এই পুরো ফাইলের কোড পেস্ট করুন। কনফিগারেশন নিচের CONFIG
+     অবজেক্টে পরিবর্তন করুন।
+     ============================================================ -->
+
+<style>
+  #zl-exit-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.72);
+    z-index: 999999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  #zl-exit-overlay.zl-show { display: flex; }
+  .zl-exit-popup {
+    position: relative;
+    background: #ffffff;
+    color: #0f172a;
+    max-width: 420px;
+    width: 100%;
+    border-radius: 16px;
+    padding: 36px 28px 28px;
+    text-align: center;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+    animation: zl-pop 0.28s ease-out;
+    font-family: 'Hind Siliguri', 'Noto Sans Bengali', system-ui, sans-serif;
+  }
+  @keyframes zl-pop {
+    from { transform: translateY(24px) scale(0.96); opacity: 0; }
+    to   { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  .zl-exit-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    border: 0;
+    background: transparent;
+    font-size: 26px;
+    line-height: 1;
+    color: #94a3b8;
+    cursor: pointer;
+  }
+  .zl-exit-badge {
+    display: inline-block;
+    background: #fef3c7;
+    color: #b45309;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+  }
+  .zl-exit-popup h2 {
+    font-size: 24px;
+    line-height: 1.35;
+    margin: 0 0 10px;
+    font-weight: 700;
+  }
+  .zl-exit-popup h2 .zl-exit-amount { color: #dc2626; }
+  .zl-exit-popup p {
+    font-size: 16px;
+    color: #475569;
+    margin: 0 0 18px;
+  }
+  .zl-exit-timer {
+    background: #fee2e2;
+    color: #b91c1c;
+    font-weight: 700;
+    font-size: 15px;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 18px;
+  }
+  .zl-exit-timer span { font-size: 18px; letter-spacing: 1px; }
+  .zl-exit-btn {
+    display: block;
+    width: 100%;
+    background: #16a34a;
+    color: #ffffff !important;
+    font-size: 18px;
+    font-weight: 700;
+    text-decoration: none;
+    border: 0;
+    border-radius: 12px;
+    padding: 15px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .zl-exit-btn:hover { background: #15803d; }
+  .zl-exit-no {
+    display: inline-block;
+    margin-top: 12px;
+    border: 0;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  @media (max-width: 480px) {
+    .zl-exit-popup { padding: 30px 20px 22px; }
+    .zl-exit-popup h2 { font-size: 21px; }
+  }
+</style>
+
+<div id="zl-exit-overlay" aria-hidden="true">
+  <div class="zl-exit-popup" role="dialog" aria-modal="true" aria-labelledby="zl-exit-title">
+    <button type="button" class="zl-exit-close" id="zl-exit-close" aria-label="বন্ধ করুন">&times;</button>
+    <div class="zl-exit-badge">🎁 শুধু আপনার জন্য বিশেষ অফার</div>
+    <h2 id="zl-exit-title">
+      একটু দাঁড়ান! এখনই অর্ডার করলে
+      <span class="zl-exit-amount"></span> ছাড়!
+    </h2>
+    <p>
+      ডিসকাউন্টটি মূল দাম থেকে সরাসরি কেটে যাবে —
+      কোনো কুপন কোড টাইপ করতে হবে না।
+    </p>
+    <div class="zl-exit-timer">
+      ⏳ অফার শেষ হতে বাকি: <span id="zl-exit-countdown">--:--</span>
+    </div>
+    <button type="button" class="zl-exit-btn" id="zl-exit-cta">
+      ডিসকাউন্ট নিয়ে অর্ডার করুন ➜
+    </button>
+    <button type="button" class="zl-exit-no" id="zl-exit-no">
+      না ধন্যবাদ, আমি পুরো দাম দিতে চাই
+    </button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============ কনফিগারেশন — শুধু এই অংশটুকু বদলান ============ */
+  var CONFIG = {
+    minSecondsOnPage: 45,      // কত সেকেন্ড পরে পপআপ সক্রিয় হবে
+    discountAmount: 100,       // ডিসকাউন্ট (টাকা) — 50 বা 100
+    couponCode: 'EXIT100',     // WooCommerce কুপন কোড (PHP স্নিপেটের সাথে মিলতে হবে)
+    offerMinutes: 15,          // কাউন্টডাউন টাইমার (মিনিট)
+    frequencyHours: 24,        // একই ভিজিটরকে কত ঘণ্টা পর আবার দেখানো হবে
+
+    // mode: 'woocommerce' → CTA চাপলে চেকআউটে পাঠাবে, কুপন অটো-অ্যাপ্লাই হবে
+    // mode: 'form'        → একই পেজের অর্ডার ফর্মে স্ক্রল করবে ও দাম আপডেট করবে
+    mode: 'woocommerce',
+
+    // woocommerce মোড: আপনার প্রোডাক্টের চেকআউট লিংক (প্রোডাক্ট ID বদলান)
+    ctaUrl: '/checkout/?add-to-cart=123',
+
+    // form মোড: অর্ডার ফর্মের সিলেক্টর ও দাম দেখানোর এলিমেন্ট
+    orderFormSelector: '#order-form',
+    priceSelector: '[data-zl-price]',   // যেমন: <span data-zl-price="990">৯৯০</span>
+    discountFieldName: 'zl_discount'    // ফর্মের হিডেন ফিল্ডের name
+  };
+  /* ============================================================= */
+
+  var overlay = document.getElementById('zl-exit-overlay');
+  if (!overlay) return;
+
+  var LS_SHOWN = 'zl_exit_shown_at';
+  var LS_DEADLINE = 'zl_exit_deadline';
+  var shown = false;
+  var visibleSeconds = 0;
+  var countdownTimer = null;
+
+  // সংখ্যাকে বাংলা ডিজিটে রূপান্তর
+  function bn(n) {
+    return String(n).replace(/\d/g, function (d) { return '০১২৩৪৫৬৭৮৯'[d]; });
+  }
+
+  function setCookie(name, value, maxAgeSeconds) {
+    document.cookie = name + '=' + encodeURIComponent(value) +
+      '; path=/; max-age=' + maxAgeSeconds + '; SameSite=Lax';
+  }
+
+  function hasCookie(name) {
+    return document.cookie.indexOf(name + '=') !== -1;
+  }
+
+  // ফ্রিকোয়েন্সি চেক: সম্প্রতি দেখানো হলে বা ডিসকাউন্ট নেওয়া থাকলে আর দেখাবে না
+  function suppressed() {
+    if (hasCookie('zl_exit_coupon')) return true;
+    try {
+      var at = parseInt(localStorage.getItem(LS_SHOWN) || '0', 10);
+      return at && (Date.now() - at) < CONFIG.frequencyHours * 3600 * 1000;
+    } catch (e) { return false; }
+  }
+
+  // ডিসকাউন্টের পরিমাণ পপআপে বসানো
+  Array.prototype.forEach.call(
+    overlay.querySelectorAll('.zl-exit-amount'),
+    function (el) { el.textContent = '৳' + bn(CONFIG.discountAmount) + ' টাকা'; }
+  );
+
+  // ট্যাব খোলা থাকা অবস্থার সময় গণনা (ট্যাব মিনিমাইজ থাকলে গণনা হয় না)
+  setInterval(function () {
+    if (!document.hidden) visibleSeconds++;
+    if (visibleSeconds === CONFIG.minSecondsOnPage) armMobileTraps();
+  }, 1000);
+
+  function armed() {
+    return visibleSeconds >= CONFIG.minSecondsOnPage && !shown && !suppressed();
+  }
+
+  /* ---------- ট্রিগার ১: ডেস্কটপ — মাউস উপরের দিকে বেরিয়ে গেলে ---------- */
+  document.addEventListener('mouseout', function (e) {
+    if (armed() && !e.relatedTarget && e.clientY <= 0) showPopup();
+  });
+
+  /* ---------- ট্রিগার ২: মোবাইল — ব্যাক বাটন ---------- */
+  var backTrapArmed = false;
+  function armMobileTraps() {
+    if (backTrapArmed || suppressed()) return;
+    backTrapArmed = true;
+    try { history.pushState({ zlExit: true }, ''); } catch (e) {}
+    window.addEventListener('popstate', function () {
+      if (armed()) showPopup();
+    });
+  }
+
+  /* ---------- ট্রিগার ৩: মোবাইল — দ্রুত উপরের দিকে স্ক্রল ---------- */
+  var lastY = 0, lastT = 0;
+  window.addEventListener('scroll', function () {
+    var y = window.pageYOffset, t = Date.now();
+    // পেজের কিছুটা নিচে নেমে দ্রুত (৪০০px/৩০০ms) উপরে উঠলে
+    if (armed() && lastY - y > 400 && t - lastT < 300 && y > 300) showPopup();
+    lastY = y; lastT = t;
+  }, { passive: true });
+
+  /* ---------- পপআপ দেখানো ---------- */
+  function showPopup() {
+    shown = true;
+    try { localStorage.setItem(LS_SHOWN, String(Date.now())); } catch (e) {}
+    overlay.classList.add('zl-show');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.getElementById('zl-exit-cta').focus();
+    startCountdown();
+    // অ্যানালিটিক্স ইভেন্ট (GTM/GA4 থাকলে ধরা পড়বে)
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ event: 'exit_popup_shown' });
+  }
+
+  function hidePopup() {
+    overlay.classList.remove('zl-show');
+    overlay.setAttribute('aria-hidden', 'true');
+    if (countdownTimer) clearInterval(countdownTimer);
+  }
+
+  /* ---------- কাউন্টডাউন (রিফ্রেশ করলেও রিসেট হয় না) ---------- */
+  function startCountdown() {
+    var deadline;
+    try {
+      deadline = parseInt(localStorage.getItem(LS_DEADLINE) || '0', 10);
+      if (!deadline || deadline < Date.now()) {
+        deadline = Date.now() + CONFIG.offerMinutes * 60 * 1000;
+        localStorage.setItem(LS_DEADLINE, String(deadline));
+      }
+    } catch (e) {
+      deadline = Date.now() + CONFIG.offerMinutes * 60 * 1000;
+    }
+    var el = document.getElementById('zl-exit-countdown');
+    function tick() {
+      var left = Math.max(0, Math.floor((deadline - Date.now()) / 1000));
+      var m = Math.floor(left / 60), s = left % 60;
+      el.textContent = bn((m < 10 ? '0' : '') + m) + ':' + bn((s < 10 ? '0' : '') + s);
+      if (left <= 0) { clearInterval(countdownTimer); hidePopup(); }
+    }
+    tick();
+    countdownTimer = setInterval(tick, 1000);
+  }
+
+  /* ---------- CTA: ডিসকাউন্ট নিয়ে অর্ডার ---------- */
+  document.getElementById('zl-exit-cta').addEventListener('click', function () {
+    // কুকি সেট — PHP স্নিপেট এটি দেখে কুপন অ্যাপ্লাই করবে
+    setCookie('zl_exit_coupon', CONFIG.couponCode, CONFIG.offerMinutes * 60);
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ event: 'exit_popup_claimed', discount: CONFIG.discountAmount });
+
+    if (CONFIG.mode === 'woocommerce') {
+      var sep = CONFIG.ctaUrl.indexOf('?') === -1 ? '?' : '&';
+      window.location.href = CONFIG.ctaUrl + sep + 'exit_coupon=' + encodeURIComponent(CONFIG.couponCode);
+      return;
+    }
+
+    // form মোড: দাম আপডেট + হিডেন ফিল্ড পূরণ + ফর্মে স্ক্রল
+    hidePopup();
+    Array.prototype.forEach.call(document.querySelectorAll(CONFIG.priceSelector), function (el) {
+      var base = parseFloat(el.getAttribute('data-zl-price'));
+      if (!isNaN(base)) {
+        var now = Math.max(0, base - CONFIG.discountAmount);
+        el.innerHTML = '<del style="color:#94a3b8">৳' + bn(base) + '</del> <strong>৳' + bn(now) + '</strong>';
+      }
+    });
+    Array.prototype.forEach.call(
+      document.querySelectorAll('input[name="' + CONFIG.discountFieldName + '"]'),
+      function (input) { input.value = CONFIG.couponCode + ':' + CONFIG.discountAmount; }
+    );
+    var form = document.querySelector(CONFIG.orderFormSelector);
+    if (form) form.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  /* ---------- বন্ধ করার উপায়সমূহ ---------- */
+  document.getElementById('zl-exit-close').addEventListener('click', hidePopup);
+  document.getElementById('zl-exit-no').addEventListener('click', hidePopup);
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) hidePopup(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hidePopup(); });
+})();
+</script>
