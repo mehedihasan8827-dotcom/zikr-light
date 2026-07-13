@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>আমসত্ত্ব — স্ক্রলিং নোটিফিকেশন বার (ডেমো)</title>
+<!--
+  ═══════════════════════════════════════════════════════════════
+  Pure Food Mart BD — আমসত্ত্ব ল্যান্ডিং পেজ
+  স্ক্রলিং নোটিফিকেশন বার (ডান → বাম, লাল ব্যাকগ্রাউন্ড, সাদা টেক্সট)
+
+  ব্যবহারবিধি:
+  নিচে "▼ এখান থেকে কপি করুন" থেকে "▲ এখান পর্যন্ত কপি করুন"
+  পর্যন্ত পুরো অংশটি কপি করে আপনার ওয়েবসাইটের <body> ট্যাগের
+  একদম শুরুতে (অথবা পেজ বিল্ডারের Custom HTML ব্লকে, পেজের
+  সবার উপরে) পেস্ট করুন। কোনো JavaScript বা এক্সটার্নাল
+  লাইব্রেরি লাগবে না।
+
+  টেক্সট বদলাতে চাইলে: শুধু .pfm-notify-item এর ভেতরের লেখা
+  বদলান (৮টি জায়গায় একই লেখা আছে — সবগুলো একসাথে বদলাবেন)।
+  ═══════════════════════════════════════════════════════════════
+-->
+<style>
+  /* ডেমো পেজের নিজস্ব স্টাইল (কপি করার দরকার নেই) */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Hind Siliguri", "Noto Sans Bengali", "SolaimanLipi", sans-serif;
+    background: #ffffff;
+    color: #1a1a1a;
+  }
+</style>
+</head>
+<body>
+
+<!-- ▼▼▼ এখান থেকে কপি করুন ▼▼▼ -->
+<style>
+  /* ══════════ স্ক্রলিং নোটিফিকেশন বার ══════════ */
+  .pfm-notify-bar {
+    /* সেটিংস — প্রয়োজনমতো বদলান */
+    --pfm-speed: 18s;                 /* এক লুপের সময়; বড় সংখ্যা = ধীর */
+    --pfm-bg-dark: #B71C1C;           /* গাঢ় লাল */
+    --pfm-bg-light: #D32F2F;          /* উজ্জ্বল লাল */
+    --pfm-text: #FFFFFF;              /* সাদা টেক্সট */
+    --pfm-accent: #FFD54F;            /* হলুদ হাইলাইট (সময়ের অংশ) */
+
+    position: relative;               /* বারটি সবসময় উপরে আটকে রাখতে চাইলে
+                                         এই লাইনটি বদলে লিখুন:
+                                         position: sticky; top: 0; z-index: 9999; */
+    overflow: hidden;
+    background: linear-gradient(90deg,
+      var(--pfm-bg-dark) 0%,
+      var(--pfm-bg-light) 50%,
+      var(--pfm-bg-dark) 100%);
+    box-shadow: 0 2px 8px rgba(183, 28, 28, 0.35);
+    padding: 10px 0;
+  }
+  .pfm-notify-track {
+    display: flex;
+    width: max-content;
+    animation: pfm-scroll var(--pfm-speed) linear infinite;
+  }
+  /* মাউস রাখলে বা টাচ করলে স্ক্রল থেমে যাবে — পড়তে সুবিধা */
+  .pfm-notify-bar:hover .pfm-notify-track,
+  .pfm-notify-bar:focus-within .pfm-notify-track {
+    animation-play-state: paused;
+  }
+  .pfm-notify-group {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+  }
+  .pfm-notify-item {
+    flex: 0 0 auto;
+    color: var(--pfm-text);
+    font-family: "Hind Siliguri", "Noto Sans Bengali", "SolaimanLipi", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  }
+  .pfm-notify-item strong {
+    color: var(--pfm-accent);
+    font-weight: 700;
+  }
+  .pfm-notify-sep {
+    flex: 0 0 auto;
+    color: var(--pfm-accent);
+    font-size: 12px;
+    margin: 0 22px;
+    opacity: 0.9;
+  }
+  /* ডানদিক থেকে বামদিকে অবিরাম স্ক্রল */
+  @keyframes pfm-scroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  /* ট্যাবলেট ও ডেস্কটপে একটু বড় টেক্সট */
+  @media (min-width: 768px) {
+    .pfm-notify-bar { padding: 12px 0; }
+    .pfm-notify-item { font-size: 16px; }
+    .pfm-notify-sep { margin: 0 30px; }
+  }
+  /* যাঁদের ডিভাইসে অ্যানিমেশন বন্ধ (accessibility) —
+     তাঁরা মাঝখানে স্থির একটি মেসেজ দেখবেন */
+  @media (prefers-reduced-motion: reduce) {
+    .pfm-notify-track { animation: none; width: 100%; justify-content: center; }
+    .pfm-notify-group[aria-hidden="true"] { display: none; }
+    .pfm-notify-item:not(:first-child), .pfm-notify-sep { display: none; }
+    .pfm-notify-item { white-space: normal; text-align: center; padding: 0 12px; }
+  }
+</style>
+
+<div class="pfm-notify-bar" role="region" aria-label="বিশেষ অফার">
+  <div class="pfm-notify-track">
+    <div class="pfm-notify-group">
+      <span class="pfm-notify-item">🔥 ফ্রি ডেলিভারি অফারটি <strong>আজ রাত ১২ টায়</strong> শেষ হতে যাচ্ছে!</span>
+      <span class="pfm-notify-sep">✦</span>
+      <span class="pfm-notify-item">🔥 ফ্রি ডেলিভারি অফারটি <strong>আজ রাত ১২ টায়</strong> শেষ হতে যাচ্ছে!</span>
+      <span class="pfm-notify-sep">✦</span>
+      <span class="pfm-notify-item">🔥 ফ্রি ডেলিভারি অফারটি <strong>আজ রাত ১২ টায়</strong> শেষ হতে যাচ্ছে!</span>
+      <span class="pfm-notify-sep">✦</span>
+      <span class="pfm-notify-item">🔥 ফ্রি ডেলিভারি অফারটি <strong>আজ রাত ১২ টায়</strong> শেষ হতে যাচ্ছে!</span>
+      <span class="pfm-notify-sep">✦</span>
+    </div>
+    <div class="pfm-notify-group" aria-hidden="true">
+      <span class="pfm-notify-item">🔥 ফ্রি ডেলিভারি অফারটি <strong>আজ রাত ১২ টায়</strong> শেষ হতে যাচ্ছে!</span>
+      <span class="pfm-notify-sep">✦</span>
+      <span class="pfm-notify-item">🔥 ফ্রি ডেলিভারি অফারটি <strong>আজ রাত ১২ টায়</strong> শেষ হতে যাচ্ছে!</span>
+      <span class="pfm-notify-sep">✦</span>
+      <span class="pfm-notify-item">🔥 ফ্রি ডেলিভারি অফারটি <strong>আজ রাত ১২ টায়</strong> শেষ হতে যাচ্ছে!</span>
+      <span class="pfm-notify-sep">✦</span>
+      <span class="pfm-notify-item">🔥 ফ্রি ডেলিভারি অফারটি <strong>আজ রাত ১২ টায়</strong> শেষ হতে যাচ্ছে!</span>
+      <span class="pfm-notify-sep">✦</span>
+    </div>
+  </div>
+</div>
+<!-- ▲▲▲ এখান পর্যন্ত কপি করুন ▲▲▲ -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     নিচের অংশটুকু শুধু ডেমো/প্রিভিউয়ের জন্য — আপনার আসল
+     হিরো সেকশনের একটি মকআপ, যাতে বারটি কনটেক্সটে দেখা যায়।
+     এটি কপি করার দরকার নেই।
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+  .demo-hero { max-width: 480px; margin: 0 auto; padding: 28px 20px 40px; text-align: center; }
+  .demo-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #E8F5E9; border: 1px solid #C8E6C9; border-radius: 999px;
+    padding: 8px 18px; font-size: 14px; font-weight: 600; color: #1B5E20;
+  }
+  .demo-badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #2E7D32; }
+  .demo-hero h1 { font-size: 32px; line-height: 1.35; margin-top: 18px; font-weight: 800; }
+  .demo-hl-yellow { background: linear-gradient(transparent 55%, #FFE082 55%); }
+  .demo-hl-green { color: #2E7D32; }
+  .demo-sub { margin-top: 12px; font-size: 16px; color: #424242; }
+  .demo-offer {
+    display: inline-block; margin-top: 18px; background: #F5F5F5;
+    padding: 10px 20px; font-size: 18px; font-weight: 700; color: #C62828;
+  }
+  .demo-return { margin-top: 14px; font-size: 15px; font-weight: 600; color: #2E7D32; }
+  .demo-img {
+    margin-top: 24px; height: 240px; border-radius: 12px;
+    background: linear-gradient(135deg, #A5D6A7, #66BB6A);
+    display: flex; align-items: center; justify-content: center;
+    color: #FFFFFF; font-size: 15px; font-weight: 600;
+  }
+</style>
+<main class="demo-hero">
+  <span class="demo-badge">১০০% চিনি ও প্রিজারভেটিভ মুক্ত</span>
+  <h1>এই সিজনের <span class="demo-hl-yellow">পাকা আমের</span> তৈরি <span class="demo-hl-green">আমসত্ত্ব</span></h1>
+  <p class="demo-sub">ধুলাবালি, ধোঁয়ার গন্ধ মুক্ত মজাদার আমসত্ত্ব</p>
+  <div class="demo-offer">🔥 সারাদেশে ফ্রি হোম ডেলিভারি</div>
+  <p class="demo-return">পছন্দ না হলে সঙ্গে সঙ্গে ০০৳ রিটার্ন করবেন</p>
+  <div class="demo-img">(প্রোডাক্ট ছবির জায়গা — ডেমো)</div>
+</main>
+
+</body>
+</html>
