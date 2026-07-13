@@ -1,9 +1,13 @@
 <!-- ============================================================
      এক্সিট-ইনটেন্ট ডিসকাউন্ট পপআপ (Elementor HTML উইজেট)
+     WooCommerce + CartFlows Pro — পেজে এমবেড করা অর্ডার ফর্মের জন্য
      ------------------------------------------------------------
      ইন্সটল: Elementor পেজের একদম নিচে একটি "HTML" উইজেট যোগ করে
      এই পুরো ফাইলের কোড পেস্ট করুন। কনফিগারেশন নিচের CONFIG
      অবজেক্টে পরিবর্তন করুন।
+
+     সাথে woocommerce-coupon.php স্নিপেটটি অবশ্যই সক্রিয় থাকতে
+     হবে — সেটিই AJAX-এর মাধ্যমে কুপন কার্টে অ্যাপ্লাই করে।
      ============================================================ -->
 
 <style>
@@ -104,6 +108,16 @@
     cursor: pointer;
     font-family: inherit;
   }
+  /* ডিসকাউন্ট নেওয়ার পর ফর্মের উপরে দেখানো সবুজ বার্তা */
+  .zl-exit-applied-note {
+    background: #dcfce7;
+    color: #166534;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin: 0 0 16px;
+    text-align: center;
+  }
   @media (max-width: 480px) {
     .zl-exit-popup { padding: 30px 20px 22px; }
     .zl-exit-popup h2 { font-size: 21px; }
@@ -146,17 +160,26 @@
     offerMinutes: 15,          // কাউন্টডাউন টাইমার (মিনিট)
     frequencyHours: 24,        // একই ভিজিটরকে কত ঘণ্টা পর আবার দেখানো হবে
 
-    // mode: 'woocommerce' → CTA চাপলে চেকআউটে পাঠাবে, কুপন অটো-অ্যাপ্লাই হবে
-    // mode: 'form'        → একই পেজের অর্ডার ফর্মে স্ক্রল করবে ও দাম আপডেট করবে
-    mode: 'woocommerce',
+    // mode: 'form'        → পেজেই থাকবে: AJAX দিয়ে কুপন অ্যাপ্লাই + ফর্মে স্ক্রল
+    //                       (CartFlows / এমবেড করা WooCommerce চেকআউটের জন্য)
+    // mode: 'woocommerce' → আলাদা চেকআউট পেজে রিডাইরেক্ট করবে
+    mode: 'form',
 
-    // woocommerce মোড: আপনার প্রোডাক্টের চেকআউট লিংক (প্রোডাক্ট ID বদলান)
-    ctaUrl: '/checkout/?add-to-cart=123',
+    // AJAX এন্ডপয়েন্ট — সাধারণত বদলাতে হবে না
+    ajaxUrl: '/wp-admin/admin-ajax.php',
 
-    // form মোড: অর্ডার ফর্মের সিলেক্টর ও দাম দেখানোর এলিমেন্ট
-    orderFormSelector: '#order-form',
-    priceSelector: '[data-zl-price]',   // যেমন: <span data-zl-price="990">৯৯০</span>
-    discountFieldName: 'zl_discount'    // ফর্মের হিডেন ফিল্ডের name
+    // অর্ডার ফর্মের সিলেক্টর: CartFlows/WooCommerce চেকআউট ফর্ম নিজে
+    // থেকেই ধরা পড়বে; নিজের কোনো সেকশনে স্ক্রল করাতে চাইলে তার
+    // CSS ID দিন (যেমন '#order-form')
+    orderFormSelector: '#order-form, form.woocommerce-checkout, .cartflows-container',
+
+    // পেজে আলাদা করে দাম দেখানোর এলিমেন্ট (ঐচ্ছিক):
+    // যেমন <span data-zl-price="990">৳৯৯০</span> → ডিসকাউন্টের পর
+    // স্বয়ংক্রিয়ভাবে কাটা দামসহ দেখাবে
+    priceSelector: '[data-zl-price]',
+
+    // woocommerce মোডে CTA-র গন্তব্য (form মোডে দরকার নেই)
+    ctaUrl: '/checkout/?add-to-cart=123'
   };
   /* ============================================================= */
 
@@ -166,12 +189,26 @@
   var LS_SHOWN = 'zl_exit_shown_at';
   var LS_DEADLINE = 'zl_exit_deadline';
   var shown = false;
+  var claimed = false;
   var visibleSeconds = 0;
   var countdownTimer = null;
 
   // সংখ্যাকে বাংলা ডিজিটে রূপান্তর
   function bn(n) {
     return String(n).replace(/\d/g, function (d) { return '০১২৩৪৫৬৭৮৯'[d]; });
+  }
+
+  /* ---------- GTM / GA4 dataLayer ইভেন্ট ---------- */
+  function pushEvent(name, extra) {
+    window.dataLayer = window.dataLayer || [];
+    var data = {
+      event: name,
+      coupon_code: CONFIG.couponCode,
+      discount_amount: CONFIG.discountAmount,
+      currency: 'BDT'
+    };
+    if (extra) { for (var k in extra) { data[k] = extra[k]; } }
+    window.dataLayer.push(data);
   }
 
   function setCookie(name, value, maxAgeSeconds) {
@@ -210,7 +247,7 @@
 
   /* ---------- ট্রিগার ১: ডেস্কটপ — মাউস উপরের দিকে বেরিয়ে গেলে ---------- */
   document.addEventListener('mouseout', function (e) {
-    if (armed() && !e.relatedTarget && e.clientY <= 0) showPopup();
+    if (armed() && !e.relatedTarget && e.clientY <= 0) showPopup('mouse_exit');
   });
 
   /* ---------- ট্রিগার ২: মোবাইল — ব্যাক বাটন ---------- */
@@ -220,7 +257,7 @@
     backTrapArmed = true;
     try { history.pushState({ zlExit: true }, ''); } catch (e) {}
     window.addEventListener('popstate', function () {
-      if (armed()) showPopup();
+      if (armed()) showPopup('back_button');
     });
   }
 
@@ -229,27 +266,29 @@
   window.addEventListener('scroll', function () {
     var y = window.pageYOffset, t = Date.now();
     // পেজের কিছুটা নিচে নেমে দ্রুত (৪০০px/৩০০ms) উপরে উঠলে
-    if (armed() && lastY - y > 400 && t - lastT < 300 && y > 300) showPopup();
+    if (armed() && lastY - y > 400 && t - lastT < 300 && y > 300) showPopup('fast_scroll_up');
     lastY = y; lastT = t;
   }, { passive: true });
 
   /* ---------- পপআপ দেখানো ---------- */
-  function showPopup() {
+  function showPopup(trigger) {
     shown = true;
     try { localStorage.setItem(LS_SHOWN, String(Date.now())); } catch (e) {}
     overlay.classList.add('zl-show');
     overlay.setAttribute('aria-hidden', 'false');
     document.getElementById('zl-exit-cta').focus();
     startCountdown();
-    // অ্যানালিটিক্স ইভেন্ট (GTM/GA4 থাকলে ধরা পড়বে)
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({ event: 'exit_popup_shown' });
+    pushEvent('exit_popup_shown', { popup_trigger: trigger });
   }
 
-  function hidePopup() {
+  function hidePopup(dismissMethod) {
     overlay.classList.remove('zl-show');
     overlay.setAttribute('aria-hidden', 'true');
     if (countdownTimer) clearInterval(countdownTimer);
+    // ডিসকাউন্ট না নিয়ে বন্ধ করলে dismissed ইভেন্ট
+    if (dismissMethod && !claimed) {
+      pushEvent('exit_popup_dismissed', { dismiss_method: dismissMethod });
+    }
   }
 
   /* ---------- কাউন্টডাউন (রিফ্রেশ করলেও রিসেট হয় না) ---------- */
@@ -269,27 +308,41 @@
       var left = Math.max(0, Math.floor((deadline - Date.now()) / 1000));
       var m = Math.floor(left / 60), s = left % 60;
       el.textContent = bn((m < 10 ? '0' : '') + m) + ':' + bn((s < 10 ? '0' : '') + s);
-      if (left <= 0) { clearInterval(countdownTimer); hidePopup(); }
+      if (left <= 0) { clearInterval(countdownTimer); hidePopup('expired'); }
     }
     tick();
     countdownTimer = setInterval(tick, 1000);
   }
 
-  /* ---------- CTA: ডিসকাউন্ট নিয়ে অর্ডার ---------- */
-  document.getElementById('zl-exit-cta').addEventListener('click', function () {
-    // কুকি সেট — PHP স্নিপেট এটি দেখে কুপন অ্যাপ্লাই করবে
-    setCookie('zl_exit_coupon', CONFIG.couponCode, CONFIG.offerMinutes * 60);
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({ event: 'exit_popup_claimed', discount: CONFIG.discountAmount });
+  /* ---------- AJAX: কুপন কার্টে অ্যাপ্লাই (form মোড) ---------- */
+  function applyCouponViaAjax() {
+    var body = 'action=zl_apply_exit_coupon&coupon=' + encodeURIComponent(CONFIG.couponCode);
+    fetch(CONFIG.ajaxUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        var status = (res && res.data && res.data.status) || (res && res.success ? 'applied' : 'failed');
+        pushEvent('exit_popup_coupon_applied', { apply_status: status });
+        // CartFlows / WooCommerce চেকআউটের টোটাল রিফ্রেশ — ডিসকাউন্ট
+        // কাটা দাম অর্ডার সামারিতে সাথে সাথে দেখা যাবে
+        if (window.jQuery) {
+          window.jQuery(document.body).trigger('update_checkout');
+        }
+      })
+      .catch(function () {
+        // AJAX ব্যর্থ হলেও কুকি সেট আছে — পরের পেজলোডে PHP স্নিপেট
+        // কুপনটি অ্যাপ্লাই করে দেবে
+        pushEvent('exit_popup_coupon_applied', { apply_status: 'ajax_error' });
+      });
+  }
 
-    if (CONFIG.mode === 'woocommerce') {
-      var sep = CONFIG.ctaUrl.indexOf('?') === -1 ? '?' : '&';
-      window.location.href = CONFIG.ctaUrl + sep + 'exit_coupon=' + encodeURIComponent(CONFIG.couponCode);
-      return;
-    }
-
-    // form মোড: দাম আপডেট + হিডেন ফিল্ড পূরণ + ফর্মে স্ক্রল
-    hidePopup();
+  /* ---------- ডিসকাউন্ট নেওয়ার পর পেজের দাম ও বার্তা আপডেট ---------- */
+  function updatePageAfterClaim() {
+    // data-zl-price দেওয়া এলিমেন্টে কাটা দাম দেখানো
     Array.prototype.forEach.call(document.querySelectorAll(CONFIG.priceSelector), function (el) {
       var base = parseFloat(el.getAttribute('data-zl-price'));
       if (!isNaN(base)) {
@@ -297,18 +350,45 @@
         el.innerHTML = '<del style="color:#94a3b8">৳' + bn(base) + '</del> <strong>৳' + bn(now) + '</strong>';
       }
     });
-    Array.prototype.forEach.call(
-      document.querySelectorAll('input[name="' + CONFIG.discountFieldName + '"]'),
-      function (input) { input.value = CONFIG.couponCode + ':' + CONFIG.discountAmount; }
-    );
+    // অর্ডার ফর্মের উপরে সবুজ নিশ্চিতকরণ বার্তা
     var form = document.querySelector(CONFIG.orderFormSelector);
+    if (form && !document.getElementById('zl-exit-applied-note')) {
+      var note = document.createElement('div');
+      note.id = 'zl-exit-applied-note';
+      note.className = 'zl-exit-applied-note';
+      note.textContent = '🎉 অভিনন্দন! আপনার ৳' + bn(CONFIG.discountAmount) +
+        ' টাকা ডিসকাউন্ট যোগ হয়েছে — নিচের ফর্মটি পূরণ করে অর্ডার সম্পন্ন করুন।';
+      form.parentNode.insertBefore(note, form);
+    }
     if (form) form.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  /* ---------- CTA: ডিসকাউন্ট নিয়ে অর্ডার ---------- */
+  document.getElementById('zl-exit-cta').addEventListener('click', function () {
+    claimed = true;
+    // কুকি সেট — AJAX ব্যর্থ হলে বা পেজ রিলোড হলে PHP স্নিপেট এটি
+    // দেখে কুপন অ্যাপ্লাই করবে (ফলব্যাক)
+    setCookie('zl_exit_coupon', CONFIG.couponCode, CONFIG.offerMinutes * 60);
+    pushEvent('exit_popup_claimed');
+
+    if (CONFIG.mode === 'woocommerce') {
+      var sep = CONFIG.ctaUrl.indexOf('?') === -1 ? '?' : '&';
+      window.location.href = CONFIG.ctaUrl + sep + 'exit_coupon=' + encodeURIComponent(CONFIG.couponCode);
+      return;
+    }
+
+    // form মোড: পেজেই থেকে কুপন অ্যাপ্লাই + দাম আপডেট + ফর্মে স্ক্রল
+    hidePopup();
+    applyCouponViaAjax();
+    updatePageAfterClaim();
   });
 
   /* ---------- বন্ধ করার উপায়সমূহ ---------- */
-  document.getElementById('zl-exit-close').addEventListener('click', hidePopup);
-  document.getElementById('zl-exit-no').addEventListener('click', hidePopup);
-  overlay.addEventListener('click', function (e) { if (e.target === overlay) hidePopup(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hidePopup(); });
+  document.getElementById('zl-exit-close').addEventListener('click', function () { hidePopup('close_button'); });
+  document.getElementById('zl-exit-no').addEventListener('click', function () { hidePopup('no_thanks'); });
+  overlay.addEventListener('click', function (e) { if (e.target === overlay) hidePopup('overlay_click'); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && overlay.classList.contains('zl-show')) hidePopup('escape_key');
+  });
 })();
 </script>
