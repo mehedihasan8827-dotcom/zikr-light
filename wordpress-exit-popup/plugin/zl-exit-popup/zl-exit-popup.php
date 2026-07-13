@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ZL Exit Intent Discount Popup
  * Description: এক্সিট-ইনটেন্ট ডিসকাউন্ট পপআপ — WooCommerce/CartFlows ল্যান্ডিং পেজের জন্য। ভিজিটর নির্দিষ্ট সময় পেজে থাকার পর বেরিয়ে যেতে চাইলে ডিসকাউন্ট অফার দেখায় এবং কুপন AJAX-এ কার্টে অটো-অ্যাপ্লাই করে।
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Mehedi Hasan
  * Requires at least: 5.8
  * Requires PHP: 7.2
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ZL_EXIT_VERSION', '1.0.0' );
+define( 'ZL_EXIT_VERSION', '1.1.0' );
 define( 'ZL_EXIT_OPTION', 'zl_exit_popup_settings' );
 
 /* ============================================================
@@ -58,17 +58,78 @@ add_action( 'admin_init', function () {
 	register_setting( 'zl_exit_popup', ZL_EXIT_OPTION, array( 'sanitize_callback' => 'zl_exit_sanitize_settings' ) );
 } );
 
+/**
+ * WooCommerce-এ কুপনটি না থাকলে নিজে থেকেই তৈরি করে দেয়; থাকলে
+ * ডিসকাউন্টের ধরন ও পরিমাণ সেটিংসের সাথে মিলিয়ে আপডেট করে।
+ * প্লাগইন অ্যাক্টিভেট করলে এবং সেটিংস সেভ করলে চলে — কুপন
+ * ম্যানুয়ালি বানানোর দরকার নেই।
+ */
+function zl_exit_ensure_coupon() {
+	if ( ! class_exists( 'WC_Coupon' ) ) {
+		return;
+	}
+	$s    = zl_exit_get_settings();
+	$code = $s['coupon'];
+	if ( '' === $code ) {
+		return;
+	}
+	try {
+		$coupon = new WC_Coupon( $code );
+		if ( ! $coupon->get_id() ) {
+			$coupon->set_code( $code );
+			$coupon->set_usage_limit_per_user( 1 );
+		}
+		$coupon->set_discount_type( 'fixed_cart' );
+		$coupon->set_amount( (float) $s['discount'] );
+		$coupon->save();
+	} catch ( Exception $e ) {
+		// কুপন তৈরি ব্যর্থ হলে সেটিংস পেজের স্ট্যাটাস বক্সে ধরা পড়বে
+	}
+}
+register_activation_hook( __FILE__, 'zl_exit_ensure_coupon' );
+add_action( 'add_option_' . ZL_EXIT_OPTION, 'zl_exit_ensure_coupon' );
+add_action( 'update_option_' . ZL_EXIT_OPTION, 'zl_exit_ensure_coupon' );
+
 add_action( 'admin_menu', function () {
 	add_options_page( 'Exit Popup', 'Exit Popup', 'manage_options', 'zl-exit-popup', 'zl_exit_render_settings_page' );
 } );
 
 function zl_exit_render_settings_page() {
 	$s = zl_exit_get_settings();
+
+	// স্ট্যাটাস যাচাই: কুপন আছে কি? WooCommerce-এ কুপন চালু আছে কি?
+	$coupon_id       = function_exists( 'wc_get_coupon_id_by_code' ) ? wc_get_coupon_id_by_code( $s['coupon'] ) : 0;
+	$coupon_amount   = 0;
+	if ( $coupon_id && class_exists( 'WC_Coupon' ) ) {
+		$c             = new WC_Coupon( $coupon_id );
+		$coupon_amount = (float) $c->get_amount();
+	}
+	$coupons_enabled = 'yes' === get_option( 'woocommerce_enable_coupons' );
 	?>
 	<div class="wrap">
 		<h1>Exit Intent Discount Popup</h1>
-		<p>প্রথমে WooCommerce → Marketing → Coupons-এ কুপনটি তৈরি করুন
-			(Fixed cart discount, নিচের Amount-এর সমান, Usage limit per user: 1)।</p>
+
+		<?php if ( ! $coupons_enabled ) : ?>
+			<div class="notice notice-error"><p>
+				<strong>সতর্কতা:</strong> WooCommerce-এ কুপন ব্যবহার বন্ধ করা আছে — ডিসকাউন্ট কাজ করবে না!
+				চালু করতে যান: <strong>WooCommerce → Settings → General → "Enable the use of coupon codes"</strong> টিক দিয়ে সেভ করুন।
+			</p></div>
+		<?php endif; ?>
+
+		<?php if ( $coupon_id ) : ?>
+			<div class="notice notice-success"><p>
+				✅ কুপন <strong><?php echo esc_html( $s['coupon'] ); ?></strong> WooCommerce-এ তৈরি আছে
+				(ডিসকাউন্ট: ৳<?php echo esc_html( $coupon_amount ); ?>)। পপআপ থেকে এটিই অটো-অ্যাপ্লাই হবে।
+			</p></div>
+		<?php else : ?>
+			<div class="notice notice-warning"><p>
+				⚠️ কুপন <strong><?php echo esc_html( $s['coupon'] ); ?></strong> এখনো WooCommerce-এ নেই।
+				নিচের <strong>Save Changes</strong> বাটনে একবার ক্লিক করুন — কুপনটি স্বয়ংক্রিয়ভাবে তৈরি হয়ে যাবে।
+			</p></div>
+		<?php endif; ?>
+
+		<p>কুপন ম্যানুয়ালি বানাতে হবে না — সেটিংস সেভ করলেই প্লাগইন নিজে থেকে
+			কুপনটি তৈরি/আপডেট করে দেয় (Fixed cart discount, Usage limit per user: 1)।</p>
 		<form method="post" action="options.php">
 			<?php settings_fields( 'zl_exit_popup' ); ?>
 			<table class="form-table" role="presentation">
@@ -257,6 +318,11 @@ function zl_exit_ajax_apply_coupon() {
 		);
 	}
 
+	// ব্যর্থ কুপনের এরর নোটিস মুছে দিই — নইলে পরে চেকআউটে ইংরেজি
+	// এরর মেসেজ দেখা যেত
+	if ( function_exists( 'wc_clear_notices' ) ) {
+		wc_clear_notices();
+	}
 	wp_send_json_error( array( 'status' => 'apply_failed' ) );
 }
 
