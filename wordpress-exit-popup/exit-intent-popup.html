@@ -190,7 +190,6 @@
   var LS_DEADLINE = 'zl_exit_deadline';
   var shown = false;
   var claimed = false;
-  var visibleSeconds = 0;
   var countdownTimer = null;
 
   // সংখ্যাকে বাংলা ডিজিটে রূপান্তর
@@ -235,38 +234,78 @@
     function (el) { el.textContent = '৳' + bn(CONFIG.discountAmount) + ' টাকা'; }
   );
 
-  // ট্যাব খোলা থাকা অবস্থার সময় গণনা (ট্যাব মিনিমাইজ থাকলে গণনা হয় না)
-  setInterval(function () {
-    if (!document.hidden) visibleSeconds++;
-    if (visibleSeconds === CONFIG.minSecondsOnPage) armMobileTraps();
-  }, 1000);
+  /* ---------- সময় গণনা: setInterval-এর টিকের বদলে টাইমস্ট্যাম্প ----------
+     ট্যাব দৃশ্যমান থাকা সময় Date.now() দিয়ে জমা হয় — ব্রাউজার টাইমার
+     থ্রটল করলেও বা কোনো "সেকেন্ড" মিস হলেও হিসাব নির্ভুল থাকে। */
+  var visibleAccumMs = 0;
+  var visibleSince = document.hidden ? null : Date.now();
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      if (visibleSince) { visibleAccumMs += Date.now() - visibleSince; visibleSince = null; }
+    } else if (!visibleSince) {
+      visibleSince = Date.now();
+    }
+  });
 
-  function armed() {
-    return visibleSeconds >= CONFIG.minSecondsOnPage && !shown && !suppressed();
+  function visibleSeconds() {
+    return (visibleAccumMs + (visibleSince ? Date.now() - visibleSince : 0)) / 1000;
+  }
+
+  function timeGatePassed() {
+    return visibleSeconds() >= CONFIG.minSecondsOnPage;
+  }
+
+  // পপআপ দেখানো যাবে কি না — ঠিক দেখানোর মুহূর্তে যাচাই হয়
+  function canShow() {
+    return timeGatePassed() && !shown && !suppressed();
   }
 
   /* ---------- ট্রিগার ১: ডেস্কটপ — মাউস উপরের দিকে বেরিয়ে গেলে ---------- */
   document.addEventListener('mouseout', function (e) {
-    if (armed() && !e.relatedTarget && e.clientY <= 0) showPopup('mouse_exit');
+    if (canShow() && !e.relatedTarget && e.clientY <= 0) showPopup('mouse_exit');
   });
 
-  /* ---------- ট্রিগার ২: মোবাইল — ব্যাক বাটন ---------- */
-  var backTrapArmed = false;
-  function armMobileTraps() {
-    if (backTrapArmed || suppressed()) return;
-    backTrapArmed = true;
-    try { history.pushState({ zlExit: true }, ''); } catch (e) {}
-    window.addEventListener('popstate', function () {
-      if (armed()) showPopup('back_button');
-    });
+  /* ---------- ট্রিগার ২: মোবাইল — ব্যাক বাটন / ব্যাক জেসচার ----------
+     Chrome/Android-এর "history manipulation intervention" নীতি:
+     ইউজারের কোনো ইন্টারঅ্যাকশন ছাড়া pushState দিয়ে বানানো হিস্টরি
+     এন্ট্রি ব্যাক-বাটনে এড়িয়ে যাওয়া হয় (popstate ফায়ারই হয় না)।
+     তাই সেন্টিনেল এন্ট্রিটি পুশ করা হয় ভিজিটরের *প্রথম ইন্টারঅ্যাকশনে*
+     (টাচ/ক্লিক/কী/স্ক্রল) — ৪৫ সেকেন্ডের জন্য অপেক্ষা করা হয় না।
+     ৪৫ সেকেন্ডের গেটটি popstate-এর ভেতরে যাচাই হয়; গেট পার না হলে
+     history.back() দিয়ে ভিজিটরকে স্বাভাবিকভাবে বেরিয়ে যেতে দেওয়া হয়। */
+  var sentinelActive = false;
+
+  function armBackTrap() {
+    if (sentinelActive || shown || suppressed()) return;
+    try {
+      history.pushState({ zlExit: true }, '');
+      sentinelActive = true;
+    } catch (e) { /* pushState ব্লকড — ব্যাক-ট্র্যাপ ছাড়া বাকি সব চলবে */ }
   }
+
+  window.addEventListener('popstate', function () {
+    if (!sentinelActive) return; // অন্য কোনো নেভিগেশন (হ্যাশ লিংক ইত্যাদি)
+    sentinelActive = false;      // সেন্টিনেল এন্ট্রিটি এইমাত্র পপ হলো
+    if (canShow()) {
+      showPopup('back_button');
+    } else {
+      // ৪৫ সেকেন্ড পার হয়নি বা পপআপ আগেই দেখানো হয়েছে —
+      // ভিজিটরকে আটকানো হবে না, ব্যাক নেভিগেশন চলতে থাকবে
+      history.back();
+    }
+  });
+
+  // প্রথম ইন্টারঅ্যাকশনে ট্র্যাপ আর্ম — Chrome-এর user-activation শর্ত পূরণ হয়
+  ['touchstart', 'pointerdown', 'mousedown', 'keydown', 'scroll'].forEach(function (evt) {
+    window.addEventListener(evt, armBackTrap, { once: true, passive: true, capture: true });
+  });
 
   /* ---------- ট্রিগার ৩: মোবাইল — দ্রুত উপরের দিকে স্ক্রল ---------- */
   var lastY = 0, lastT = 0;
   window.addEventListener('scroll', function () {
     var y = window.pageYOffset, t = Date.now();
     // পেজের কিছুটা নিচে নেমে দ্রুত (৪০০px/৩০০ms) উপরে উঠলে
-    if (armed() && lastY - y > 400 && t - lastT < 300 && y > 300) showPopup('fast_scroll_up');
+    if (canShow() && lastY - y > 400 && t - lastT < 300 && y > 300) showPopup('fast_scroll_up');
     lastY = y; lastT = t;
   }, { passive: true });
 
