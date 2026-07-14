@@ -178,13 +178,29 @@
     }
   });
 
-  /* ---------- ট্রিগার ৩: মোবাইল — দ্রুত উপরের দিকে স্ক্রল ---------- */
-  var lastY = 0, lastT = 0;
+  /* ---------- ট্রিগার ৩: মোবাইল — দ্রুত উপরের দিকে স্ক্রল ----------
+     বাস্তব ফোনে ফ্লিক-স্ক্রলে scroll ইভেন্ট প্রতি ফ্রেমে ছোট ছোট ধাপে
+     (৩০-৮০px) আসে — পরপর দুই ইভেন্টে ৪০০px লাফ প্রায় কখনো হয় না।
+     তাই দুই ইভেন্টের ব্যবধান নয়, একটানা উপরে ওঠার *জমা দূরত্ব* মাপা হয়:
+     ৭০০ মিলিসেকেন্ডের জানালায় মোট ৪০০px+ উপরে উঠলে ট্রিগার। ধীরে
+     স্ক্রল করে পড়তে থাকা ভিজিটরের বেলায় ফায়ার হয় না। */
+  var upAnchorY = null, upAnchorT = 0, lastScrollY = window.pageYOffset;
   window.addEventListener('scroll', function () {
     var y = window.pageYOffset, t = Date.now();
-    // পেজের কিছুটা নিচে নেমে দ্রুত (৪০০px/৩০০ms) উপরে উঠলে
-    if (lastY - y > 400 && t - lastT < 300 && y > 300 && canShow()) showPopup('fast_scroll_up');
-    lastY = y; lastT = t;
+    if (y < lastScrollY) {
+      // উপরের দিকে উঠছে — নতুন ধাক্কা হলে বা জানালা পেরোলে নোঙর রিসেট
+      if (upAnchorY === null || t - upAnchorT > 700) {
+        upAnchorY = lastScrollY;
+        upAnchorT = t;
+      }
+      if (upAnchorY - y > 400 && y > 200 && canShow()) {
+        upAnchorY = null;
+        showPopup('fast_scroll_up');
+      }
+    } else if (y > lastScrollY) {
+      upAnchorY = null; // নিচের দিকে গেলে হিসাব বাতিল
+    }
+    lastScrollY = y;
   }, { passive: true });
 
   /* ---------- পপআপ দেখানো ---------- */

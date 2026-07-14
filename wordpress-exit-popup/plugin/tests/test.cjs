@@ -147,7 +147,7 @@ async function popupVisible(page) {
   record('১৫. সময়ের আগে ব্যাক চাপলে স্বাভাবিকভাবে বেরিয়ে যায়', page.url() !== URL, page.url().slice(0, 30));
   await ctx.close();
 
-  /* টেস্ট ১৬: মোবাইল দ্রুত স্ক্রল-আপ ট্রিগার */
+  /* টেস্ট ১৬: মোবাইল দ্রুত স্ক্রল-আপ — এক লাফে বড় জাম্প */
   ctx = await browser.newContext({ viewport: { width: 390, height: 800 }, hasTouch: true, isMobile: true });
   page = await ctx.newPage();
   await page.goto(URL);
@@ -156,7 +156,28 @@ async function popupVisible(page) {
     window.scrollTo(0, 1400);
     setTimeout(() => { window.scrollTo(0, 800); setTimeout(done, 300); }, 120);
   }));
-  record('১৬. দ্রুত স্ক্রল-আপে পপআপ আসে (মোবাইল ভিউপোর্ট)', await popupVisible(page));
+  record('১৬. দ্রুত স্ক্রল-আপে পপআপ আসে (এক লাফে)', await popupVisible(page));
+  await ctx.close();
+
+  /* টেস্ট ১৭: বাস্তব ফোনের মতো ফ্লিক — প্রতি ফ্রেমে ছোট ছোট ধাপ।
+     আসল ডিভাইসে momentum-স্ক্রলে scroll ইভেন্ট ৩০-৮০px ধাপে আসে;
+     পুরনো (দুই-ইভেন্ট-ব্যবধান) লজিকে এটি কখনো ট্রিগার হতো না। */
+  ctx = await browser.newContext({ viewport: { width: 390, height: 800 }, hasTouch: true, isMobile: true });
+  page = await ctx.newPage();
+  await page.goto(URL);
+  await page.waitForTimeout(2600);
+  await page.evaluate(() => new Promise((done) => {
+    window.scrollTo(0, 1600); // আগে নিচে নেমে পড়ছিলেন
+    setTimeout(() => {
+      var y = 1600, steps = 0;
+      var iv = setInterval(() => {
+        y -= 60; steps++;           // ৬০px প্রতি ~২০ms = বাস্তব ফ্লিকের গতি
+        window.scrollTo(0, y);
+        if (steps >= 12) { clearInterval(iv); setTimeout(done, 300); } // মোট ৭২০px
+      }, 20);
+    }, 400);
+  }));
+  record('১৭. বাস্তব ফ্লিক-স্ক্রলে (ছোট ধাপে) পপআপ আসে', await popupVisible(page));
   await ctx.close();
 
   await browser.close();
