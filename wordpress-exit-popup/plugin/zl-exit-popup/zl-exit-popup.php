@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ZL Exit Intent Discount Popup
  * Description: এক্সিট-ইনটেন্ট ডিসকাউন্ট পপআপ — WooCommerce/CartFlows ল্যান্ডিং পেজের জন্য। ভিজিটর নির্দিষ্ট সময় পেজে থাকার পর বেরিয়ে যেতে চাইলে ডিসকাউন্ট অফার দেখায় এবং কুপন AJAX-এ কার্টে অটো-অ্যাপ্লাই করে।
- * Version: 1.2.0
+ * Version: 1.3.0
  * Author: Mehedi Hasan
  * Requires at least: 5.8
  * Requires PHP: 7.2
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ZL_EXIT_VERSION', '1.2.0' );
+define( 'ZL_EXIT_VERSION', '1.3.0' );
 define( 'ZL_EXIT_OPTION', 'zl_exit_popup_settings' );
 
 /* ============================================================
@@ -63,11 +63,11 @@ function zl_exit_sanitize_settings( $input ) {
 		'form_selector'   => sanitize_text_field( isset( $input['form_selector'] ) ? $input['form_selector'] : $d['form_selector'] ),
 		'txt_badge'       => sanitize_text_field( isset( $input['txt_badge'] ) ? $input['txt_badge'] : $d['txt_badge'] ),
 		'txt_headline'    => sanitize_text_field( isset( $input['txt_headline'] ) ? $input['txt_headline'] : $d['txt_headline'] ),
-		'txt_desc'        => sanitize_text_field( isset( $input['txt_desc'] ) ? $input['txt_desc'] : $d['txt_desc'] ),
+		'txt_desc'        => sanitize_textarea_field( isset( $input['txt_desc'] ) ? $input['txt_desc'] : $d['txt_desc'] ),
 		'txt_timer'       => sanitize_text_field( isset( $input['txt_timer'] ) ? $input['txt_timer'] : $d['txt_timer'] ),
 		'txt_cta'         => sanitize_text_field( isset( $input['txt_cta'] ) ? $input['txt_cta'] : $d['txt_cta'] ),
 		'txt_no'          => sanitize_text_field( isset( $input['txt_no'] ) ? $input['txt_no'] : $d['txt_no'] ),
-		'txt_applied'     => sanitize_text_field( isset( $input['txt_applied'] ) ? $input['txt_applied'] : $d['txt_applied'] ),
+		'txt_applied'     => sanitize_textarea_field( isset( $input['txt_applied'] ) ? $input['txt_applied'] : $d['txt_applied'] ),
 	);
 }
 
@@ -92,6 +92,12 @@ function zl_exit_ensure_coupon() {
 	}
 	try {
 		$coupon = new WC_Coupon( $code );
+		// আগেই সঠিক অবস্থায় থাকলে অহেতুক সেভ নয়
+		if ( $coupon->get_id()
+			&& 'fixed_cart' === $coupon->get_discount_type()
+			&& (float) $s['discount'] === (float) $coupon->get_amount() ) {
+			return;
+		}
 		if ( ! $coupon->get_id() ) {
 			$coupon->set_code( $code );
 			$coupon->set_usage_limit_per_user( 1 );
@@ -107,12 +113,27 @@ register_activation_hook( __FILE__, 'zl_exit_ensure_coupon' );
 add_action( 'add_option_' . ZL_EXIT_OPTION, 'zl_exit_ensure_coupon' );
 add_action( 'update_option_' . ZL_EXIT_OPTION, 'zl_exit_ensure_coupon' );
 
+/**
+ * আনইন্সটল (Delete) করলে সেটিংস মুছে যায়। কুপনটি ইচ্ছাকৃতভাবে রাখা
+ * হয় — পুরনো অর্ডারের হিসাবের সাথে জড়িত বলে সেটা মোছা নিরাপদ নয়;
+ * দরকার হলে Marketing → Coupons থেকে ম্যানুয়ালি মুছবেন।
+ */
+function zl_exit_uninstall() {
+	delete_option( ZL_EXIT_OPTION );
+}
+register_uninstall_hook( __FILE__, 'zl_exit_uninstall' );
+
 add_action( 'admin_menu', function () {
 	add_options_page( 'Exit Popup', 'Exit Popup', 'manage_options', 'zl-exit-popup', 'zl_exit_render_settings_page' );
 } );
 
 function zl_exit_render_settings_page() {
 	$s = zl_exit_get_settings();
+
+	// সেটিংস পেজ খোলা মাত্রই কুপন যাচাই-ও-তৈরি। শুধু হুকের ভরসায় থাকলে
+	// দুটি ফাঁক থাকে: (ক) update_option অপরিবর্তিত মানে ফায়ার হয় না,
+	// (খ) অ্যাক্টিভেশনের সময় WooCommerce নিষ্ক্রিয় থাকলে কুপন তৈরি হয় না।
+	zl_exit_ensure_coupon();
 
 	// স্ট্যাটাস যাচাই: কুপন আছে কি? WooCommerce-এ কুপন চালু আছে কি?
 	$coupon_id       = function_exists( 'wc_get_coupon_id_by_code' ) ? wc_get_coupon_id_by_code( $s['coupon'] ) : 0;
@@ -238,6 +259,9 @@ function zl_exit_render_settings_page() {
 		</form>
 		<p><strong>টেস্ট করতে:</strong> ল্যান্ডিং পেজের URL-এর শেষে <code>?zl_exit_debug=1</code>
 			যোগ করুন — আগের টেস্টের ব্লক মুছে যাবে এবং ব্রাউজার কনসোলে প্রতিটি ধাপের লগ দেখা যাবে।</p>
+		<p><strong>⚠️ ক্যাশ প্লাগইন ব্যবহার করলে:</strong> সেটিংস (সময়, ডিসকাউন্ট, লেখা) বদলানোর
+			পর ক্যাশ পরিষ্কার (Purge Cache) করুন — নইলে ভিজিটররা ক্যাশে জমে থাকা পুরনো
+			সেটিংসের পপআপই দেখতে থাকবে।</p>
 	</div>
 	<?php
 }
@@ -426,11 +450,14 @@ function zl_exit_maybe_apply_coupon() {
 	}
 
 	if ( ! WC()->cart->has_discount( $code ) ) {
-		WC()->cart->apply_coupon( $code );
-		wc_add_notice(
-			sprintf( 'অভিনন্দন! আপনার এক্সিট অফারের ডিসকাউন্ট (%s) যোগ হয়েছে।', esc_html( $code ) ),
-			'success'
-		);
+		// সফল হলেই কেবল বাংলা সাকসেস নোটিস; ব্যর্থ হলে (যেমন minimum
+		// spend পূরণ হয়নি) WooCommerce-এর নিজের এরর বার্তাই দেখা যাবে
+		if ( WC()->cart->apply_coupon( $code ) ) {
+			wc_add_notice(
+				sprintf( 'অভিনন্দন! আপনার এক্সিট অফারের ডিসকাউন্ট (%s) যোগ হয়েছে।', esc_html( $code ) ),
+				'success'
+			);
+		}
 	}
 }
 

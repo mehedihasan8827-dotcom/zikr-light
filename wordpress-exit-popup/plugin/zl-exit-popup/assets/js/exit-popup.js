@@ -19,9 +19,10 @@
   var LS_SHOWN = 'zl_exit_shown_at';
   var LS_DEADLINE = 'zl_exit_deadline';
   var COOKIE = 'zl_exit_coupon';
-  var shown = false;
   var claimed = false;
   var countdownTimer = null;
+  // localStorage ব্যর্থ হলে (যেমন কিছু প্রাইভেট মোডে) মেমোরি-ফলব্যাক
+  var memShownAt = 0;
 
   var DEBUG = /[?&]zl_exit_debug=1/.test(window.location.search);
   function log() {
@@ -68,13 +69,26 @@
     return document.cookie.indexOf(name + '=') !== -1;
   }
 
+  // সর্বশেষ কখন পপআপ দেখানো হয়েছে — localStorage, না পারলে মেমোরি থেকে।
+  // মেমোরি ভেরিয়েবলের বদলে টাইমস্ট্যাম্প ব্যবহারের কারণ: ট্যাব দিনের পর
+  // দিন খোলা/রিস্টোর থাকলেও ফ্রিকোয়েন্সির সময় পেরোলে পপআপ আবার আসবে।
+  function lastShownAt() {
+    try {
+      var v = parseInt(localStorage.getItem(LS_SHOWN) || '0', 10);
+      if (v) return v;
+    } catch (e) {}
+    return memShownAt;
+  }
+
   // ফ্রিকোয়েন্সি চেক: সম্প্রতি দেখানো হলে বা ডিসকাউন্ট নেওয়া থাকলে আর দেখাবে না
   function suppressed() {
     if (hasCookie(COOKIE)) return true;
-    try {
-      var at = parseInt(localStorage.getItem(LS_SHOWN) || '0', 10);
-      return !!at && (Date.now() - at) < cfg.frequencyHours * 3600 * 1000;
-    } catch (e) { return false; }
+    var at = lastShownAt();
+    return !!at && (Date.now() - at) < cfg.frequencyHours * 3600 * 1000;
+  }
+
+  function popupOpen() {
+    return overlay.classList.contains('zl-show');
   }
 
   // ডিসকাউন্টের পরিমাণ পপআপে বসানো
@@ -100,11 +114,16 @@
     return (visibleAccumMs + (visibleSince ? Date.now() - visibleSince : 0)) / 1000;
   }
 
-  // পপআপ দেখানো যাবে কি না — ঠিক দেখানোর মুহূর্তে যাচাই হয়
+  // পপআপ দেখানো যাবে কি না — ঠিক দেখানোর মুহূর্তে যাচাই হয়।
+  // ইচ্ছাকৃতভাবে কোনো "shown" মেমোরি-ফ্ল্যাগ নেই: দেখানোর মুহূর্তেই
+  // টাইমস্ট্যাম্প জমা হয় বলে একই পেজলোডে দ্বিতীয়বার আসে না, আবার
+  // দীর্ঘদিন খোলা ট্যাবেও ফ্রিকোয়েন্সির সময় পেরোলে আবার আসতে পারে।
   function canShow() {
     var t = visibleSeconds();
-    var ok = t >= cfg.minSecondsOnPage && !shown && !suppressed();
-    log('canShow?', ok, '(visible:', Math.round(t) + 's, shown:', shown, ', suppressed:', suppressed() + ')');
+    var supp = suppressed();
+    var open = popupOpen();
+    var ok = t >= cfg.minSecondsOnPage && !open && !supp;
+    log('canShow?', ok, '(visible:', Math.round(t) + 's, open:', open, ', suppressed:', supp + ')');
     return ok;
   }
 
@@ -126,7 +145,7 @@
   var sentinelActive = false;
 
   function armBackTrap() {
-    if (sentinelActive || shown || suppressed()) return;
+    if (sentinelActive || popupOpen() || suppressed()) return;
     // যেখানে সম্ভব, ব্রাউজারকে সরাসরি জিজ্ঞেস করা হয় activation আছে কি না
     if (navigator.userActivation && !navigator.userActivation.hasBeenActive) {
       log('armBackTrap skipped — no user activation yet');
@@ -170,8 +189,8 @@
 
   /* ---------- পপআপ দেখানো ---------- */
   function showPopup(trigger) {
-    shown = true;
-    try { localStorage.setItem(LS_SHOWN, String(Date.now())); } catch (e) {}
+    memShownAt = Date.now();
+    try { localStorage.setItem(LS_SHOWN, String(memShownAt)); } catch (e) {}
     overlay.classList.add('zl-show');
     overlay.setAttribute('aria-hidden', 'false');
     document.getElementById('zl-exit-cta').focus();
@@ -251,7 +270,9 @@
     });
     // অর্ডার ফর্মের উপরে সবুজ নিশ্চিতকরণ বার্তা
     // {discount} টোকেন "৳X টাকা" দিয়ে বদলে যায় (সেটিংস থেকে আসা লেখা)
-    var form = document.querySelector(cfg.formSelector);
+    // সেটিংসে ভুল সিলেক্টর লিখলে যেন স্ক্রিপ্ট না ভাঙে, তাই try/catch
+    var form = null;
+    try { form = document.querySelector(cfg.formSelector); } catch (e) { log('bad formSelector:', e); }
     if (form && !document.getElementById('zl-exit-applied-note')) {
       var msg = (cfg.appliedText || '').replace('{discount}', '৳' + bn(cfg.discountAmount) + ' টাকা');
       var note = document.createElement('div');
@@ -269,6 +290,8 @@
     // ফলব্যাক কুকি — AJAX ব্যর্থ হলে বা পেজ রিলোড হলে PHP এটি দেখে
     // কুপন অ্যাপ্লাই করবে
     setCookie(COOKIE, cfg.couponCode, cfg.offerMinutes * 60);
+    // ডিসকাউন্ট নেওয়া হয়ে গেছে — কাউন্টডাউনের ডেডলাইন আর দরকার নেই
+    try { localStorage.removeItem(LS_DEADLINE); } catch (e) {}
     pushEvent('exit_popup_claimed');
     hidePopup();
     applyCouponViaAjax();
