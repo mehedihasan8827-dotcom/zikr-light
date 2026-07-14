@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZL Exit Popup — টেস্ট পেজ</title>
+<link rel="stylesheet" href="exit-popup.css">
+<style>body { min-height: 5000px; font-family: sans-serif; }</style>
+</head>
+<body>
+<h1>ল্যান্ডিং পেজ (টেস্ট)</h1>
+<p>দাম: <span data-zl-price="990">৳৯৯০</span></p>
+
+<div id="order-form" style="margin-top:2200px; border:1px solid #ccc; padding:20px;">
+  অর্ডার ফর্ম (নকল)
+</div>
+
+<!-- প্লাগইনের wp_footer মার্কআপের হুবহু কপি -->
+<div id="zl-exit-overlay" aria-hidden="true">
+  <div class="zl-exit-popup" role="dialog" aria-modal="true" aria-labelledby="zl-exit-title">
+    <button type="button" class="zl-exit-close" id="zl-exit-close" aria-label="বন্ধ করুন">&times;</button>
+    <div class="zl-exit-badge">🎁 শুধু আপনার জন্য বিশেষ অফার</div>
+    <h2 id="zl-exit-title">একটু দাঁড়ান! এখনই অর্ডার করলে <span class="zl-exit-amount"></span> ছাড়!</h2>
+    <p>ডিসকাউন্টটি মূল দাম থেকে সরাসরি কেটে যাবে — কোনো কুপন কোড টাইপ করতে হবে না।</p>
+    <div class="zl-exit-timer">⏳ অফার শেষ হতে বাকি: <span id="zl-exit-countdown">--:--</span></div>
+    <button type="button" class="zl-exit-btn" id="zl-exit-cta">ডিসকাউন্ট নিয়ে অর্ডার করুন ➜</button>
+    <button type="button" class="zl-exit-no" id="zl-exit-no">না ধন্যবাদ, আমি পুরো দাম দিতে চাই</button>
+  </div>
+</div>
+
+<script>
+// wp_localize_script-এর নকল (টেস্টের জন্য minSecondsOnPage=2)
+window.zlExitCfg = {
+  ajaxUrl: '/mock-ajax',
+  minSecondsOnPage: 2,
+  discountAmount: 100,
+  couponCode: 'EXIT100',
+  offerMinutes: 15,
+  frequencyHours: 24,
+  formSelector: '#order-form, form.woocommerce-checkout, .cartflows-container',
+  appliedText: '🎉 অভিনন্দন! আপনার {discount} ডিসকাউন্ট যোগ হয়েছে — নিচের ফর্মটি পূরণ করে অর্ডার সম্পন্ন করুন।'
+};
+// AJAX মক: সার্ভার ছাড়াই সফল রেসপন্স, কলগুলো রেকর্ড হয়
+window.__fetchCalls = [];
+window.fetch = function (url, opts) {
+  window.__fetchCalls.push({ url: url, body: opts && opts.body });
+  return Promise.resolve({ json: function () {
+    return Promise.resolve({ success: true, data: { status: 'applied' } });
+  } });
+};
+</script>
+<script src="exit-popup.js"></script>
+</body>
+</html>
