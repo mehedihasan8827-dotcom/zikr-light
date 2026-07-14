@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ZL Exit Intent Discount Popup
  * Description: এক্সিট-ইনটেন্ট ডিসকাউন্ট পপআপ — WooCommerce/CartFlows ল্যান্ডিং পেজের জন্য। ভিজিটর নির্দিষ্ট সময় পেজে থাকার পর বেরিয়ে যেতে চাইলে ডিসকাউন্ট অফার দেখায় এবং কুপন AJAX-এ কার্টে অটো-অ্যাপ্লাই করে।
- * Version: 1.4.0
+ * Version: 1.5.0
  * Author: Mehedi Hasan
  * Requires at least: 5.8
  * Requires PHP: 7.2
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ZL_EXIT_VERSION', '1.4.0' );
+define( 'ZL_EXIT_VERSION', '1.5.0' );
 define( 'ZL_EXIT_OPTION', 'zl_exit_popup_settings' );
 
 /* ============================================================

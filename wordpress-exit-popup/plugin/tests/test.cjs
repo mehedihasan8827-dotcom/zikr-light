@@ -180,6 +180,38 @@ async function popupVisible(page) {
   record('১৭. বাস্তব ফ্লিক-স্ক্রলে (ছোট ধাপে) পপআপ আসে', await popupVisible(page));
   await ctx.close();
 
+  /* টেস্ট ১৮: ফেসবুক ইন-অ্যাপ ব্রাউজার — কোনো ট্যাপ নেই, শুধু অপেক্ষা।
+     FB WebView-তে অ্যাপ নিজে webView.goBack() চালায় (Chrome-এর UI-back
+     নয়), যা history intervention-এর আওতায় পড়ে না — তাই এখানে
+     history.back() কল দিয়েই সেটির আচরণ সিমুলেট করা হয়। */
+  const FB_UA = 'Mozilla/5.0 (Linux; Android 13; SM-A515F) AppleWebKit/537.36 ' +
+    '(KHTML, like Gecko) Version/4.0 Chrome/122.0.0.0 Mobile Safari/537.36 ' +
+    '[FB_IAB/FB4A;FBAV/455.0.0.0.0;]';
+  ctx = await browser.newContext({ viewport: { width: 390, height: 800 }, hasTouch: true, isMobile: true, userAgent: FB_UA });
+  page = await ctx.newPage();
+  await page.goto(URL);
+  // কোনো ক্লিক/ট্যাপ/স্ক্রল নেই — শুধু সময় গেট + আর্মিং-টিকার পেরোনোর অপেক্ষা
+  await page.waitForTimeout(3800);
+  const inAppArmed = await page.evaluate(() => !!(history.state && history.state.zlExit === true));
+  record('১৮ক. FB ইন-অ্যাপে ট্যাপ ছাড়াই ৪৫ সে.-তে ট্র্যাপ আর্ম হয়', inAppArmed);
+  await page.evaluate(() => history.back()); // webView.goBack()-এর সমতুল্য
+  await page.waitForTimeout(600);
+  const inAppPopup = await popupVisible(page);
+  const inAppEvt = await page.evaluate(() =>
+    (window.dataLayer || []).some((e) => e.event === 'exit_popup_shown' && e.popup_trigger === 'back_button'));
+  record('১৮খ. FB ইন-অ্যাপে ব্যাক চাপলে পপআপ আসে (স্ক্রল-only ভিজিটর)', inAppPopup && inAppEvt);
+  await ctx.close();
+
+  /* টেস্ট ১৯: সাধারণ Chrome (FB UA নয়) — ট্যাপ ছাড়া আর্ম হয় *না*।
+     মাঠের পরীক্ষায় প্রমাণিত Chrome-নীতির সাথে সামঞ্জস্য নিশ্চিত করা। */
+  ctx = await browser.newContext({ viewport: { width: 390, height: 800 }, hasTouch: true, isMobile: true });
+  page = await ctx.newPage();
+  await page.goto(URL);
+  await page.waitForTimeout(3800);
+  const chromeArmed = await page.evaluate(() => !!(history.state && history.state.zlExit === true));
+  record('১৯. সাধারণ Chrome-এ ট্যাপ ছাড়া আর্ম হয় না (নীতি-সম্মত)', !chromeArmed);
+  await ctx.close();
+
   await browser.close();
   server.close();
 

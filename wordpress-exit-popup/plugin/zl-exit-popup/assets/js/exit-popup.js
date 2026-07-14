@@ -31,6 +31,15 @@
     }
   }
 
+  /* ---------- ইন-অ্যাপ ব্রাউজার শনাক্তকরণ ----------
+     ফেসবুক/মেসেঞ্জার/ইনস্টাগ্রামের ভেতরের ব্রাউজার Chrome নয় — WebView।
+     Chrome-এর "history manipulation intervention" (ট্যাপ ছাড়া pushState
+     এন্ট্রি ব্যাক-বাটনে স্কিপ করা) সেখানে প্রযোজ্য নয়: অ্যাপ নিজে
+     webView.goBack() চালায়, যা সব এন্ট্রিকেই সম্মান করে। তাই ইন-অ্যাপে
+     ট্যাপের অপেক্ষা না করে সময়-গেট পেরোলেই ট্র্যাপ আর্ম করা যায় —
+     শুধু-স্ক্রল-করা ভিজিটরও ব্যাক-বাটনের জালে ধরা পড়েন। */
+  var IN_APP = /FBAN|FBAV|FB_IAB|FBIOS|FB4A|Instagram/i.test(navigator.userAgent || '');
+
   // ডিবাগ মোড: আগের টেস্টের suppression মুছে ফেলা হয়
   if (DEBUG) {
     try {
@@ -146,8 +155,10 @@
 
   function armBackTrap() {
     if (sentinelActive || popupOpen() || suppressed()) return;
-    // যেখানে সম্ভব, ব্রাউজারকে সরাসরি জিজ্ঞেস করা হয় activation আছে কি না
-    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) {
+    // Chrome-এ activation ছাড়া পুশ করা অর্থহীন (এন্ট্রি skippable হয়ে
+    // যায় এবং পরে আর বদলানো যায় না); ইন-অ্যাপ WebView-তে এই নীতি
+    // নেই, তাই সেখানে activation-এর অপেক্ষা করা হয় না
+    if (!IN_APP && navigator.userActivation && !navigator.userActivation.hasBeenActive) {
       log('armBackTrap skipped — no user activation yet');
       return;
     }
@@ -163,6 +174,23 @@
   ACTIVATION_EVENTS.forEach(function (evt) {
     window.addEventListener(evt, armBackTrap, { passive: true, capture: true });
   });
+
+  /* ইন-অ্যাপ ব্রাউজার (ফেসবুক/ইনস্টাগ্রাম): ট্যাপের দরকার নেই — সময়-গেট
+     পেরোনো মাত্র আর্ম। ইচ্ছাকৃতভাবে ৪৫ সেকেন্ডের *আগে* আর্ম করা হয় না,
+     যাতে আগেই বেরিয়ে যেতে চাওয়া ভিজিটর এক চাপেই স্বাভাবিকভাবে বেরোতে
+     পারেন — সেন্টিনেল তখনো থাকেই না। */
+  if (IN_APP) {
+    var inAppArmTimer = setInterval(function () {
+      if (suppressed()) { clearInterval(inAppArmTimer); return; }
+      if (visibleSeconds() >= cfg.minSecondsOnPage) {
+        armBackTrap();
+        if (sentinelActive) {
+          log('in-app back trap armed at time gate');
+          clearInterval(inAppArmTimer);
+        }
+      }
+    }, 1000);
+  }
 
   window.addEventListener('popstate', function () {
     log('popstate fired, sentinelActive:', sentinelActive);
@@ -321,4 +349,23 @@
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && overlay.classList.contains('zl-show')) hidePopup('escape_key');
   });
+
+  /* ---------- ডিবাগ ব্যাজ: স্ক্রিনের কোণে লাইভ স্ট্যাটাস ----------
+     ইন-অ্যাপ ব্রাউজারে (ফেসবুক/ইনস্টাগ্রাম) কনসোল দেখা যায় না, তাই
+     ?zl_exit_debug=1 দিলে পেজের কোণেই দেখা যায়: ইন-অ্যাপ শনাক্ত হলো
+     কি না, কত সেকেন্ড হলো, ট্র্যাপ আর্ম হয়েছে কি না। */
+  if (DEBUG) {
+    var dbg = document.createElement('div');
+    dbg.style.cssText = 'position:fixed;bottom:8px;left:8px;z-index:2147483000;' +
+      'background:rgba(0,0,0,.78);color:#4ade80;font:11px/1.5 monospace;' +
+      'padding:6px 9px;border-radius:6px;pointer-events:none;white-space:pre';
+    document.body.appendChild(dbg);
+    setInterval(function () {
+      dbg.textContent = 'zl-exit ডিবাগ' +
+        '\nin-app: ' + IN_APP +
+        '\nসময়: ' + Math.floor(visibleSeconds()) + 's / ' + cfg.minSecondsOnPage + 's' +
+        '\narmed: ' + sentinelActive +
+        '\nsuppressed: ' + suppressed();
+    }, 500);
+  }
 })();
