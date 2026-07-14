@@ -250,13 +250,14 @@
       }
     });
     // অর্ডার ফর্মের উপরে সবুজ নিশ্চিতকরণ বার্তা
+    // {discount} টোকেন "৳X টাকা" দিয়ে বদলে যায় (সেটিংস থেকে আসা লেখা)
     var form = document.querySelector(cfg.formSelector);
     if (form && !document.getElementById('zl-exit-applied-note')) {
+      var msg = (cfg.appliedText || '').replace('{discount}', '৳' + bn(cfg.discountAmount) + ' টাকা');
       var note = document.createElement('div');
       note.id = 'zl-exit-applied-note';
       note.className = 'zl-exit-applied-note';
-      note.textContent = '🎉 অভিনন্দন! আপনার ৳' + bn(cfg.discountAmount) +
-        ' টাকা ডিসকাউন্ট যোগ হয়েছে — নিচের ফর্মটি পূরণ করে অর্ডার সম্পন্ন করুন।';
+      note.textContent = msg;
       form.parentNode.insertBefore(note, form);
     }
     if (form) form.scrollIntoView({ behavior: 'smooth' });

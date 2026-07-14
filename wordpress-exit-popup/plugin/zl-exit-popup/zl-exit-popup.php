@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ZL Exit Intent Discount Popup
  * Description: এক্সিট-ইনটেন্ট ডিসকাউন্ট পপআপ — WooCommerce/CartFlows ল্যান্ডিং পেজের জন্য। ভিজিটর নির্দিষ্ট সময় পেজে থাকার পর বেরিয়ে যেতে চাইলে ডিসকাউন্ট অফার দেখায় এবং কুপন AJAX-এ কার্টে অটো-অ্যাপ্লাই করে।
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Mehedi Hasan
  * Requires at least: 5.8
  * Requires PHP: 7.2
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ZL_EXIT_VERSION', '1.1.0' );
+define( 'ZL_EXIT_VERSION', '1.2.0' );
 define( 'ZL_EXIT_OPTION', 'zl_exit_popup_settings' );
 
 /* ============================================================
@@ -32,6 +32,16 @@ function zl_exit_default_settings() {
 		// কমা দিয়ে পেজ ID দিন (যেমন: 12,34)
 		'page_ids'        => '',
 		'form_selector'   => '#order-form, form.woocommerce-checkout, .cartflows-container',
+
+		// পপআপের লেখাগুলো — ড্যাশবোর্ড থেকে বদলানো যায়।
+		// {discount} লিখলে সেখানে ডিসকাউন্টের পরিমাণ (যেমন ৳১০০ টাকা) বসবে।
+		'txt_badge'       => '🎁 শুধু আপনার জন্য বিশেষ অফার',
+		'txt_headline'    => 'একটু দাঁড়ান! এখনই অর্ডার করলে {discount} ছাড়!',
+		'txt_desc'        => 'ডিসকাউন্টটি মূল দাম থেকে সরাসরি কেটে যাবে — কোনো কুপন কোড টাইপ করতে হবে না।',
+		'txt_timer'       => '⏳ অফার শেষ হতে বাকি:',
+		'txt_cta'         => 'ডিসকাউন্ট নিয়ে অর্ডার করুন ➜',
+		'txt_no'          => 'না ধন্যবাদ, আমি পুরো দাম দিতে চাই',
+		'txt_applied'     => '🎉 অভিনন্দন! আপনার {discount} ডিসকাউন্ট যোগ হয়েছে — নিচের ফর্মটি পূরণ করে অর্ডার সম্পন্ন করুন।',
 	);
 }
 
@@ -51,6 +61,13 @@ function zl_exit_sanitize_settings( $input ) {
 		'frequency_hours' => max( 1, absint( isset( $input['frequency_hours'] ) ? $input['frequency_hours'] : $d['frequency_hours'] ) ),
 		'page_ids'        => implode( ',', array_filter( array_map( 'absint', explode( ',', isset( $input['page_ids'] ) ? $input['page_ids'] : '' ) ) ) ),
 		'form_selector'   => sanitize_text_field( isset( $input['form_selector'] ) ? $input['form_selector'] : $d['form_selector'] ),
+		'txt_badge'       => sanitize_text_field( isset( $input['txt_badge'] ) ? $input['txt_badge'] : $d['txt_badge'] ),
+		'txt_headline'    => sanitize_text_field( isset( $input['txt_headline'] ) ? $input['txt_headline'] : $d['txt_headline'] ),
+		'txt_desc'        => sanitize_text_field( isset( $input['txt_desc'] ) ? $input['txt_desc'] : $d['txt_desc'] ),
+		'txt_timer'       => sanitize_text_field( isset( $input['txt_timer'] ) ? $input['txt_timer'] : $d['txt_timer'] ),
+		'txt_cta'         => sanitize_text_field( isset( $input['txt_cta'] ) ? $input['txt_cta'] : $d['txt_cta'] ),
+		'txt_no'          => sanitize_text_field( isset( $input['txt_no'] ) ? $input['txt_no'] : $d['txt_no'] ),
+		'txt_applied'     => sanitize_text_field( isset( $input['txt_applied'] ) ? $input['txt_applied'] : $d['txt_applied'] ),
 	);
 }
 
@@ -175,6 +192,48 @@ function zl_exit_render_settings_page() {
 					</td>
 				</tr>
 			</table>
+
+			<h2 style="margin-top:2em">পপআপের লেখা</h2>
+			<p class="description" style="font-size:14px">
+				নিচের যেকোনো বক্সে নিজের ভাষায় লিখুন। <code>{discount}</code> লিখলে সেখানে
+				ডিসকাউন্টের পরিমাণ (যেমন <strong>৳১০০ টাকা</strong>) নিজে থেকে বসে যাবে।
+			</p>
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><label for="zl-txt-badge">উপরের ছোট ব্যাজ</label></th>
+					<td><input id="zl-txt-badge" type="text" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[txt_badge]" value="<?php echo esc_attr( $s['txt_badge'] ); ?>" class="large-text"></td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="zl-txt-headline">বড় হেডলাইন</label></th>
+					<td>
+						<input id="zl-txt-headline" type="text" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[txt_headline]" value="<?php echo esc_attr( $s['txt_headline'] ); ?>" class="large-text">
+						<p class="description"><code>{discount}</code> অংশটি লাল রঙে ডিসকাউন্টের পরিমাণ দেখাবে।</p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="zl-txt-desc">বিবরণ (ছোট লেখা)</label></th>
+					<td><textarea id="zl-txt-desc" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[txt_desc]" class="large-text" rows="2"><?php echo esc_textarea( $s['txt_desc'] ); ?></textarea></td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="zl-txt-timer">টাইমারের লেবেল</label></th>
+					<td><input id="zl-txt-timer" type="text" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[txt_timer]" value="<?php echo esc_attr( $s['txt_timer'] ); ?>" class="large-text"></td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="zl-txt-cta">সবুজ বাটনের লেখা</label></th>
+					<td><input id="zl-txt-cta" type="text" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[txt_cta]" value="<?php echo esc_attr( $s['txt_cta'] ); ?>" class="large-text"></td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="zl-txt-no">নিচের ছোট লিংক</label></th>
+					<td><input id="zl-txt-no" type="text" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[txt_no]" value="<?php echo esc_attr( $s['txt_no'] ); ?>" class="large-text"></td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="zl-txt-applied">ডিসকাউন্ট নেওয়ার পর সবুজ বার্তা</label></th>
+					<td>
+						<textarea id="zl-txt-applied" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[txt_applied]" class="large-text" rows="2"><?php echo esc_textarea( $s['txt_applied'] ); ?></textarea>
+						<p class="description">বাটন চাপার পর অর্ডার ফর্মের উপরে যে বার্তা দেখা যায়।</p>
+					</td>
+				</tr>
+			</table>
 			<?php submit_button(); ?>
 		</form>
 		<p><strong>টেস্ট করতে:</strong> ল্যান্ডিং পেজের URL-এর শেষে <code>?zl_exit_debug=1</code>
@@ -232,6 +291,7 @@ add_action( 'wp_enqueue_scripts', function () {
 			'offerMinutes'     => (int) $s['offer_minutes'],
 			'frequencyHours'   => (int) $s['frequency_hours'],
 			'formSelector'     => $s['form_selector'],
+			'appliedText'      => $s['txt_applied'],
 		)
 	);
 } );
@@ -240,16 +300,25 @@ add_action( 'wp_footer', function () {
 	if ( ! zl_exit_should_load() ) {
 		return;
 	}
+	$s = zl_exit_get_settings();
+
+	// হেডলাইনের {discount} টোকেনকে লাল-রঙা span-এ বদলে দিই; span-টি
+	// JavaScript "৳X টাকা" দিয়ে পূরণ করে। বাকি অংশ নিরাপদে esc_html।
+	$parts    = explode( '{discount}', $s['txt_headline'] );
+	$headline = esc_html( $parts[0] );
+	if ( count( $parts ) > 1 ) {
+		$headline .= '<span class="zl-exit-amount"></span>' . esc_html( implode( '{discount}', array_slice( $parts, 1 ) ) );
+	}
 	?>
 	<div id="zl-exit-overlay" aria-hidden="true">
 		<div class="zl-exit-popup" role="dialog" aria-modal="true" aria-labelledby="zl-exit-title">
 			<button type="button" class="zl-exit-close" id="zl-exit-close" aria-label="বন্ধ করুন">&times;</button>
-			<div class="zl-exit-badge">🎁 শুধু আপনার জন্য বিশেষ অফার</div>
-			<h2 id="zl-exit-title">একটু দাঁড়ান! এখনই অর্ডার করলে <span class="zl-exit-amount"></span> ছাড়!</h2>
-			<p>ডিসকাউন্টটি মূল দাম থেকে সরাসরি কেটে যাবে — কোনো কুপন কোড টাইপ করতে হবে না।</p>
-			<div class="zl-exit-timer">⏳ অফার শেষ হতে বাকি: <span id="zl-exit-countdown">--:--</span></div>
-			<button type="button" class="zl-exit-btn" id="zl-exit-cta">ডিসকাউন্ট নিয়ে অর্ডার করুন ➜</button>
-			<button type="button" class="zl-exit-no" id="zl-exit-no">না ধন্যবাদ, আমি পুরো দাম দিতে চাই</button>
+			<div class="zl-exit-badge"><?php echo esc_html( $s['txt_badge'] ); ?></div>
+			<h2 id="zl-exit-title"><?php echo $headline; // phpcs:ignore WordPress.Security.EscapeOutput — উপরে esc_html করা হয়েছে ?></h2>
+			<p><?php echo esc_html( $s['txt_desc'] ); ?></p>
+			<div class="zl-exit-timer"><?php echo esc_html( $s['txt_timer'] ); ?> <span id="zl-exit-countdown">--:--</span></div>
+			<button type="button" class="zl-exit-btn" id="zl-exit-cta"><?php echo esc_html( $s['txt_cta'] ); ?></button>
+			<button type="button" class="zl-exit-no" id="zl-exit-no"><?php echo esc_html( $s['txt_no'] ); ?></button>
 		</div>
 	</div>
 	<?php
