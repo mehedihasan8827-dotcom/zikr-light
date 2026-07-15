@@ -194,12 +194,15 @@ async function popupVisible(page) {
   await page.waitForTimeout(3800);
   const inAppArmed = await page.evaluate(() => !!(history.state && history.state.zlExit === true));
   record('১৮ক. FB ইন-অ্যাপে ট্যাপ ছাড়াই ৪৫ সে.-তে ট্র্যাপ আর্ম হয়', inAppArmed);
+  const armedEvt = await page.evaluate(() =>
+    (window.dataLayer || []).some((e) => e.event === 'exit_popup_armed' && e.arm_method === 'in_app_timer'));
+  record('১৮খ. exit_popup_armed ইভেন্ট যায় (GA4 ফানেলের ভিত্তি)', armedEvt);
   await page.evaluate(() => history.back()); // webView.goBack()-এর সমতুল্য
   await page.waitForTimeout(600);
   const inAppPopup = await popupVisible(page);
   const inAppEvt = await page.evaluate(() =>
     (window.dataLayer || []).some((e) => e.event === 'exit_popup_shown' && e.popup_trigger === 'back_button'));
-  record('১৮খ. FB ইন-অ্যাপে ব্যাক চাপলে পপআপ আসে (স্ক্রল-only ভিজিটর)', inAppPopup && inAppEvt);
+  record('১৮গ. FB ইন-অ্যাপে ব্যাক চাপলে পপআপ আসে (স্ক্রল-only ভিজিটর)', inAppPopup && inAppEvt);
   await ctx.close();
 
   /* টেস্ট ১৯: সাধারণ Chrome (FB UA নয়) — ট্যাপ ছাড়া আর্ম হয় *না*।
@@ -210,6 +213,25 @@ async function popupVisible(page) {
   await page.waitForTimeout(3800);
   const chromeArmed = await page.evaluate(() => !!(history.state && history.state.zlExit === true));
   record('১৯. সাধারণ Chrome-এ ট্যাপ ছাড়া আর্ম হয় না (নীতি-সম্মত)', !chromeArmed);
+  await ctx.close();
+
+  /* টেস্ট ২০: স্ক্রল-ট্রিগার সেটিংসে বন্ধ থাকলে ফ্লিকেও পপআপ আসে না */
+  ctx = await browser.newContext({ viewport: { width: 390, height: 800 }, hasTouch: true, isMobile: true });
+  page = await ctx.newPage();
+  await page.goto(URL + '?zl_noscroll=1');
+  await page.waitForTimeout(2600);
+  await page.evaluate(() => new Promise((done) => {
+    window.scrollTo(0, 1600);
+    setTimeout(() => {
+      var y = 1600, steps = 0;
+      var iv = setInterval(() => {
+        y -= 60; steps++;
+        window.scrollTo(0, y);
+        if (steps >= 12) { clearInterval(iv); setTimeout(done, 300); }
+      }, 20);
+    }, 400);
+  }));
+  record('২০. স্ক্রল-ট্রিগার বন্ধ থাকলে ফ্লিকেও পপআপ আসে না', !(await popupVisible(page)));
   await ctx.close();
 
   await browser.close();

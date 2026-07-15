@@ -38,7 +38,10 @@ window.zlExitCfg = {
   offerMinutes: 15,
   frequencyHours: 24,
   formSelector: '#order-form, form.woocommerce-checkout, .cartflows-container',
-  appliedText: '🎉 অভিনন্দন! আপনার {discount} ডিসকাউন্ট যোগ হয়েছে — নিচের ফর্মটি পূরণ করে অর্ডার সম্পন্ন করুন।'
+  appliedText: '🎉 অভিনন্দন! আপনার {discount} ডিসকাউন্ট যোগ হয়েছে — নিচের ফর্মটি পূরণ করে অর্ডার সম্পন্ন করুন।',
+  // টেস্টে ডিফল্ট চালু; ?zl_noscroll=1 দিলে বন্ধ (সেটিংসের চেকবক্সের নকল)
+  scrollTrigger: !/zl_noscroll=1/.test(location.search),
+  savedAt: Math.floor(Date.now() / 1000)
 };
 // AJAX মক: সার্ভার ছাড়াই সফল রেসপন্স, কলগুলো রেকর্ড হয়
 window.__fetchCalls = [];

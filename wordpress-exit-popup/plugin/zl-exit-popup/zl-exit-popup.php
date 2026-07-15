@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ZL Exit Intent Discount Popup
  * Description: এক্সিট-ইনটেন্ট ডিসকাউন্ট পপআপ — WooCommerce/CartFlows ল্যান্ডিং পেজের জন্য। ভিজিটর নির্দিষ্ট সময় পেজে থাকার পর বেরিয়ে যেতে চাইলে ডিসকাউন্ট অফার দেখায় এবং কুপন AJAX-এ কার্টে অটো-অ্যাপ্লাই করে।
- * Version: 1.5.0
+ * Version: 1.6.0
  * Author: Mehedi Hasan
  * Requires at least: 5.8
  * Requires PHP: 7.2
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ZL_EXIT_VERSION', '1.5.0' );
+define( 'ZL_EXIT_VERSION', '1.6.0' );
 define( 'ZL_EXIT_OPTION', 'zl_exit_popup_settings' );
 
 /* ============================================================
@@ -32,6 +32,12 @@ function zl_exit_default_settings() {
 		// কমা দিয়ে পেজ ID দিন (যেমন: 12,34)
 		'page_ids'        => '',
 		'form_selector'   => '#order-form, form.woocommerce-checkout, .cartflows-container',
+
+		// দ্রুত স্ক্রল-আপ ট্রিগার: বাস্তব পাঠকের স্বাভাবিক উপরে-ফেরাতেও
+		// ফায়ার হতে পারে বলে ডিফল্টে বন্ধ; চাইলে সেটিংস থেকে চালু করুন
+		'trigger_scroll'  => 0,
+		// সর্বশেষ কখন সেটিংস সেভ হয়েছে (সেভ-সমস্যা নির্ণয়ের জন্য)
+		'saved_at'        => 0,
 
 		// পপআপের লেখাগুলো — ড্যাশবোর্ড থেকে বদলানো যায়।
 		// {discount} লিখলে সেখানে ডিসকাউন্টের পরিমাণ (যেমন ৳১০০ টাকা) বসবে।
@@ -68,6 +74,8 @@ function zl_exit_sanitize_settings( $input ) {
 		'txt_cta'         => sanitize_text_field( isset( $input['txt_cta'] ) ? $input['txt_cta'] : $d['txt_cta'] ),
 		'txt_no'          => sanitize_text_field( isset( $input['txt_no'] ) ? $input['txt_no'] : $d['txt_no'] ),
 		'txt_applied'     => sanitize_textarea_field( isset( $input['txt_applied'] ) ? $input['txt_applied'] : $d['txt_applied'] ),
+		'trigger_scroll'  => empty( $input['trigger_scroll'] ) ? 0 : 1,
+		'saved_at'        => time(),
 	);
 }
 
@@ -105,13 +113,32 @@ function zl_exit_ensure_coupon() {
 		$coupon->set_discount_type( 'fixed_cart' );
 		$coupon->set_amount( (float) $s['discount'] );
 		$coupon->save();
-	} catch ( Exception $e ) {
-		// কুপন তৈরি ব্যর্থ হলে সেটিংস পেজের স্ট্যাটাস বক্সে ধরা পড়বে
+	} catch ( Throwable $e ) {
+		// কুপন তৈরি ব্যর্থ হলে সেটিংস পেজের স্ট্যাটাস বক্সে ধরা পড়বে;
+		// Throwable ধরা হয় যেন কোনো ফেটাল এরর সেটিংস-সেভ ভেঙে না দেয়
 	}
 }
 register_activation_hook( __FILE__, 'zl_exit_ensure_coupon' );
 add_action( 'add_option_' . ZL_EXIT_OPTION, 'zl_exit_ensure_coupon' );
 add_action( 'update_option_' . ZL_EXIT_OPTION, 'zl_exit_ensure_coupon' );
+
+/**
+ * সেটিংস সেভ হলে জনপ্রিয় ক্যাশ প্লাগইনগুলোর ক্যাশ স্বয়ংক্রিয়ভাবে
+ * পরিষ্কার — নইলে ভিজিটররা ক্যাশে জমে থাকা পুরনো কনফিগের (সময়/লেখা/
+ * ডিসকাউন্ট) পপআপ দেখতে থাকে, আর মনে হয় "সেটিংস সেভ হচ্ছে না"।
+ */
+function zl_exit_purge_caches() {
+	if ( function_exists( 'rocket_clean_domain' ) ) { rocket_clean_domain(); }                 // WP Rocket
+	if ( function_exists( 'wp_cache_clear_cache' ) ) { wp_cache_clear_cache(); }               // WP Super Cache
+	if ( function_exists( 'w3tc_flush_all' ) ) { w3tc_flush_all(); }                           // W3 Total Cache
+	if ( function_exists( 'wpfc_clear_all_cache' ) ) { wpfc_clear_all_cache( true ); }         // WP Fastest Cache
+	if ( class_exists( 'autoptimizeCache' ) ) { autoptimizeCache::clearall(); }                // Autoptimize
+	if ( function_exists( 'sg_cachepress_purge_cache' ) ) { sg_cachepress_purge_cache(); }     // SiteGround
+	do_action( 'litespeed_purge_all' );                                                        // LiteSpeed Cache
+	do_action( 'cachify_flush_cache' );                                                        // Cachify
+}
+add_action( 'add_option_' . ZL_EXIT_OPTION, 'zl_exit_purge_caches', 20 );
+add_action( 'update_option_' . ZL_EXIT_OPTION, 'zl_exit_purge_caches', 20 );
 
 /**
  * আনইন্সটল (Delete) করলে সেটিংস মুছে যায়। কুপনটি ইচ্ছাকৃতভাবে রাখা
@@ -212,6 +239,15 @@ function zl_exit_render_settings_page() {
 						<p class="description">ডিসকাউন্ট নেওয়ার পর পেজ এখানে স্ক্রল করবে। ডিফল্টেই CartFlows/WooCommerce চেকআউট ধরা পড়ে।</p>
 					</td>
 				</tr>
+				<tr>
+					<th scope="row">দ্রুত স্ক্রল-আপ ট্রিগার</th>
+					<td>
+						<label><input type="checkbox" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[trigger_scroll]" value="1" <?php checked( $s['trigger_scroll'], 1 ); ?>> চালু</label>
+						<p class="description">চালু থাকলে দ্রুত উপরে স্ক্রল করলেও পপআপ আসে। স্বাভাবিক পাঠকও
+							উপরে ফিরে যান বলে এটি বেশি ফায়ার হতে পারে — ডিফল্টে বন্ধ।
+							ডেস্কটপ মাউস-এক্সিট ও মোবাইল ব্যাক-বাটন ট্রিগার সবসময় চালু থাকে।</p>
+					</td>
+				</tr>
 			</table>
 
 			<h2 style="margin-top:2em">পপআপের লেখা</h2>
@@ -257,6 +293,15 @@ function zl_exit_render_settings_page() {
 			</table>
 			<?php submit_button(); ?>
 		</form>
+		<?php if ( ! empty( $s['saved_at'] ) ) : ?>
+			<p><strong>🕒 সর্বশেষ সেভ হয়েছে:</strong>
+				<?php echo esc_html( human_time_diff( (int) $s['saved_at'], time() ) ); ?> আগে
+				(<?php echo esc_html( wp_date( 'j M Y, g:i a', (int) $s['saved_at'] ) ); ?>)।
+				Save চাপার পর এই সময়টা বদলালেই বুঝবেন ডাটাবেজে সেভ হয়েছে;
+				তবু ল্যান্ডিং পেজে পুরনো আচরণ দেখলে সেটা ক্যাশের সমস্যা —
+				সেভ করলে প্লাগইন নিজেই পরিচিত ক্যাশ প্লাগইনগুলো পার্জ করে,
+				তারপরও Cloudflare-জাতীয় বাইরের ক্যাশ থাকলে সেখান থেকে পার্জ করুন।</p>
+		<?php endif; ?>
 		<p><strong>টেস্ট করতে:</strong> ল্যান্ডিং পেজের URL-এর শেষে <code>?zl_exit_debug=1</code>
 			যোগ করুন — আগের টেস্টের ব্লক মুছে যাবে এবং ব্রাউজার কনসোলে প্রতিটি ধাপের লগ দেখা যাবে।</p>
 		<p><strong>⚠️ ক্যাশ প্লাগইন ব্যবহার করলে:</strong> সেটিংস (সময়, ডিসকাউন্ট, লেখা) বদলানোর
@@ -316,6 +361,8 @@ add_action( 'wp_enqueue_scripts', function () {
 			'frequencyHours'   => (int) $s['frequency_hours'],
 			'formSelector'     => $s['form_selector'],
 			'appliedText'      => $s['txt_applied'],
+			'scrollTrigger'    => ! empty( $s['trigger_scroll'] ),
+			'savedAt'          => (int) $s['saved_at'],
 		)
 	);
 } );

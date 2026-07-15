@@ -166,6 +166,9 @@
       history.pushState({ zlExit: true }, '');
       sentinelActive = true;
       log('back trap armed (sentinel pushed)');
+      // GA4-এ মাপা যায়: কতজন ভিজিটরের জন্য ব্যাক-ট্র্যাপ আদৌ বসেছে —
+      // shown(back_button) ÷ armed অনুপাতই মাঠপর্যায়ের প্রমাণ
+      pushEvent('exit_popup_armed', { arm_method: IN_APP ? 'in_app_timer' : 'user_activation' });
     } catch (e) {
       log('pushState failed:', e);
     }
@@ -212,24 +215,28 @@
      তাই দুই ইভেন্টের ব্যবধান নয়, একটানা উপরে ওঠার *জমা দূরত্ব* মাপা হয়:
      ৭০০ মিলিসেকেন্ডের জানালায় মোট ৪০০px+ উপরে উঠলে ট্রিগার। ধীরে
      স্ক্রল করে পড়তে থাকা ভিজিটরের বেলায় ফায়ার হয় না। */
-  var upAnchorY = null, upAnchorT = 0, lastScrollY = window.pageYOffset;
-  window.addEventListener('scroll', function () {
-    var y = window.pageYOffset, t = Date.now();
-    if (y < lastScrollY) {
-      // উপরের দিকে উঠছে — নতুন ধাক্কা হলে বা জানালা পেরোলে নোঙর রিসেট
-      if (upAnchorY === null || t - upAnchorT > 700) {
-        upAnchorY = lastScrollY;
-        upAnchorT = t;
+  /* সেটিংস থেকে চালু/বন্ধ করা যায় (ডিফল্টে বন্ধ) — স্বাভাবিক পাঠকও
+     উপরে ফিরে যান বলে এটি অনেক বেশি ফায়ার হতে পারে */
+  if (cfg.scrollTrigger) {
+    var upAnchorY = null, upAnchorT = 0, lastScrollY = window.pageYOffset;
+    window.addEventListener('scroll', function () {
+      var y = window.pageYOffset, t = Date.now();
+      if (y < lastScrollY) {
+        // উপরের দিকে উঠছে — নতুন ধাক্কা হলে বা জানালা পেরোলে নোঙর রিসেট
+        if (upAnchorY === null || t - upAnchorT > 700) {
+          upAnchorY = lastScrollY;
+          upAnchorT = t;
+        }
+        if (upAnchorY - y > 400 && y > 200 && canShow()) {
+          upAnchorY = null;
+          showPopup('fast_scroll_up');
+        }
+      } else if (y > lastScrollY) {
+        upAnchorY = null; // নিচের দিকে গেলে হিসাব বাতিল
       }
-      if (upAnchorY - y > 400 && y > 200 && canShow()) {
-        upAnchorY = null;
-        showPopup('fast_scroll_up');
-      }
-    } else if (y > lastScrollY) {
-      upAnchorY = null; // নিচের দিকে গেলে হিসাব বাতিল
-    }
-    lastScrollY = y;
-  }, { passive: true });
+      lastScrollY = y;
+    }, { passive: true });
+  }
 
   /* ---------- পপআপ দেখানো ---------- */
   function showPopup(trigger) {
@@ -361,11 +368,16 @@
       'padding:6px 9px;border-radius:6px;pointer-events:none;white-space:pre';
     document.body.appendChild(dbg);
     setInterval(function () {
+      // cfg-age: সেটিংস সেভ হওয়ার কত মিনিট পুরনো কনফিগ পেজে চলছে —
+      // অ্যাডমিনে এইমাত্র সেভ করার পরও এখানে বড় সংখ্যা মানে পেজ-ক্যাশ
+      var age = cfg.savedAt ? Math.round((Date.now() / 1000 - cfg.savedAt) / 60) : '?';
       dbg.textContent = 'zl-exit ডিবাগ' +
         '\nin-app: ' + IN_APP +
         '\nসময়: ' + Math.floor(visibleSeconds()) + 's / ' + cfg.minSecondsOnPage + 's' +
         '\narmed: ' + sentinelActive +
-        '\nsuppressed: ' + suppressed();
+        '\nsuppressed: ' + suppressed() +
+        '\nscroll-trigger: ' + !!cfg.scrollTrigger +
+        '\ncfg-age: ' + age + ' মিনিট';
     }, 500);
   }
 })();
