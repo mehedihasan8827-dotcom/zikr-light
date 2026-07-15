@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ZL Exit Intent Discount Popup
  * Description: এক্সিট-ইনটেন্ট ডিসকাউন্ট পপআপ — WooCommerce/CartFlows ল্যান্ডিং পেজের জন্য। ভিজিটর নির্দিষ্ট সময় পেজে থাকার পর বেরিয়ে যেতে চাইলে ডিসকাউন্ট অফার দেখায় এবং কুপন AJAX-এ কার্টে অটো-অ্যাপ্লাই করে।
- * Version: 1.6.0
+ * Version: 1.7.0
  * Author: Mehedi Hasan
  * Requires at least: 5.8
  * Requires PHP: 7.2
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ZL_EXIT_VERSION', '1.6.0' );
+define( 'ZL_EXIT_VERSION', '1.7.0' );
 define( 'ZL_EXIT_OPTION', 'zl_exit_popup_settings' );
 
 /* ============================================================
@@ -57,23 +57,27 @@ function zl_exit_get_settings() {
 }
 
 function zl_exit_sanitize_settings( $input ) {
-	$d = zl_exit_default_settings();
+	// অনুপস্থিত ফিল্ডের জন্য ফলব্যাক = বর্তমানে সেভ করা মান (ডিফল্ট নয়)।
+	// কারণ: সিকিউরিটি ফায়ারওয়াল/mod_security POST থেকে কিছু ফিল্ড ফেলে
+	// দিলে, আগের মানই টিকে থাকবে — পুরো সেটিংস ডিফল্টে ফিরে গিয়ে "মুছে
+	// যাওয়া" মনে হবে না। চেকবক্সের ক্ষেত্রে অনুপস্থিত = আনচেক (ইচ্ছাকৃত)।
+	$cur = zl_exit_get_settings();
 	return array(
 		'enabled'         => empty( $input['enabled'] ) ? 0 : 1,
-		'discount'        => max( 1, absint( isset( $input['discount'] ) ? $input['discount'] : $d['discount'] ) ),
-		'coupon'          => strtoupper( preg_replace( '/[^A-Za-z0-9_-]/', '', isset( $input['coupon'] ) ? $input['coupon'] : $d['coupon'] ) ),
-		'min_seconds'     => max( 5, absint( isset( $input['min_seconds'] ) ? $input['min_seconds'] : $d['min_seconds'] ) ),
-		'offer_minutes'   => max( 1, absint( isset( $input['offer_minutes'] ) ? $input['offer_minutes'] : $d['offer_minutes'] ) ),
-		'frequency_hours' => max( 1, absint( isset( $input['frequency_hours'] ) ? $input['frequency_hours'] : $d['frequency_hours'] ) ),
-		'page_ids'        => implode( ',', array_filter( array_map( 'absint', explode( ',', isset( $input['page_ids'] ) ? $input['page_ids'] : '' ) ) ) ),
-		'form_selector'   => sanitize_text_field( isset( $input['form_selector'] ) ? $input['form_selector'] : $d['form_selector'] ),
-		'txt_badge'       => sanitize_text_field( isset( $input['txt_badge'] ) ? $input['txt_badge'] : $d['txt_badge'] ),
-		'txt_headline'    => sanitize_text_field( isset( $input['txt_headline'] ) ? $input['txt_headline'] : $d['txt_headline'] ),
-		'txt_desc'        => sanitize_textarea_field( isset( $input['txt_desc'] ) ? $input['txt_desc'] : $d['txt_desc'] ),
-		'txt_timer'       => sanitize_text_field( isset( $input['txt_timer'] ) ? $input['txt_timer'] : $d['txt_timer'] ),
-		'txt_cta'         => sanitize_text_field( isset( $input['txt_cta'] ) ? $input['txt_cta'] : $d['txt_cta'] ),
-		'txt_no'          => sanitize_text_field( isset( $input['txt_no'] ) ? $input['txt_no'] : $d['txt_no'] ),
-		'txt_applied'     => sanitize_textarea_field( isset( $input['txt_applied'] ) ? $input['txt_applied'] : $d['txt_applied'] ),
+		'discount'        => max( 1, absint( isset( $input['discount'] ) ? $input['discount'] : $cur['discount'] ) ),
+		'coupon'          => strtoupper( preg_replace( '/[^A-Za-z0-9_-]/', '', isset( $input['coupon'] ) ? $input['coupon'] : $cur['coupon'] ) ),
+		'min_seconds'     => max( 5, absint( isset( $input['min_seconds'] ) ? $input['min_seconds'] : $cur['min_seconds'] ) ),
+		'offer_minutes'   => max( 1, absint( isset( $input['offer_minutes'] ) ? $input['offer_minutes'] : $cur['offer_minutes'] ) ),
+		'frequency_hours' => max( 1, absint( isset( $input['frequency_hours'] ) ? $input['frequency_hours'] : $cur['frequency_hours'] ) ),
+		'page_ids'        => implode( ',', array_filter( array_map( 'absint', explode( ',', isset( $input['page_ids'] ) ? $input['page_ids'] : $cur['page_ids'] ) ) ) ),
+		'form_selector'   => sanitize_text_field( isset( $input['form_selector'] ) ? $input['form_selector'] : $cur['form_selector'] ),
+		'txt_badge'       => sanitize_text_field( isset( $input['txt_badge'] ) ? $input['txt_badge'] : $cur['txt_badge'] ),
+		'txt_headline'    => sanitize_text_field( isset( $input['txt_headline'] ) ? $input['txt_headline'] : $cur['txt_headline'] ),
+		'txt_desc'        => sanitize_textarea_field( isset( $input['txt_desc'] ) ? $input['txt_desc'] : $cur['txt_desc'] ),
+		'txt_timer'       => sanitize_text_field( isset( $input['txt_timer'] ) ? $input['txt_timer'] : $cur['txt_timer'] ),
+		'txt_cta'         => sanitize_text_field( isset( $input['txt_cta'] ) ? $input['txt_cta'] : $cur['txt_cta'] ),
+		'txt_no'          => sanitize_text_field( isset( $input['txt_no'] ) ? $input['txt_no'] : $cur['txt_no'] ),
+		'txt_applied'     => sanitize_textarea_field( isset( $input['txt_applied'] ) ? $input['txt_applied'] : $cur['txt_applied'] ),
 		'trigger_scroll'  => empty( $input['trigger_scroll'] ) ? 0 : 1,
 		'saved_at'        => time(),
 	);
@@ -162,6 +166,15 @@ function zl_exit_render_settings_page() {
 	// (খ) অ্যাক্টিভেশনের সময় WooCommerce নিষ্ক্রিয় থাকলে কুপন তৈরি হয় না।
 	zl_exit_ensure_coupon();
 
+	// ডাটাবেজ রাইট-প্রোব: একটি টেস্ট মান সরাসরি লিখে-পড়ে দেখা হয়
+	// ডাটাবেজ আদৌ এই প্লাগইনের অপশন সেভ করতে দিচ্ছে কি না। এতে
+	// "সেভ হচ্ছে না" সমস্যাটা দুই ভাগে ভাগ করা যায়: DB লিখতে পারছে না,
+	// নাকি DB ঠিক আছে কিন্তু ফর্মের POST ফায়ারওয়াল আটকাচ্ছে।
+	$probe_val = 'p' . time();
+	update_option( 'zl_exit_write_probe', $probe_val, false );
+	wp_cache_delete( 'zl_exit_write_probe', 'options' );
+	$db_write_ok = ( get_option( 'zl_exit_write_probe' ) === $probe_val );
+
 	// স্ট্যাটাস যাচাই: কুপন আছে কি? WooCommerce-এ কুপন চালু আছে কি?
 	$coupon_id       = function_exists( 'wc_get_coupon_id_by_code' ) ? wc_get_coupon_id_by_code( $s['coupon'] ) : 0;
 	$coupon_amount   = 0;
@@ -173,6 +186,20 @@ function zl_exit_render_settings_page() {
 	?>
 	<div class="wrap">
 		<h1>Exit Intent Discount Popup</h1>
+
+		<?php if ( ! $db_write_ok ) : ?>
+			<div class="notice notice-error"><p>
+				❌ <strong>ডাটাবেজ রাইট সমস্যা:</strong> এই প্লাগইনের অপশন ডাটাবেজে সরাসরি
+				লেখা যাচ্ছে না। এটি অবজেক্ট-ক্যাশ (Redis/Memcached) বা হোস্টিং-এর সমস্যা —
+				হোস্টিং সাপোর্টকে জানান।
+			</p></div>
+		<?php else : ?>
+			<div class="notice notice-info" style="border-left-color:#72aee6"><p>
+				🔎 <strong>ডাটাবেজ রাইট ঠিক আছে।</strong> তাই সেটিংস সেভ না হলে সেটা
+				ডাটাবেজের সমস্যা নয় — সম্ভবত সিকিউরিটি প্লাগইন/ফায়ারওয়াল এই ফর্মের সেভ
+				(POST) আটকাচ্ছে। নিচের "সর্বশেষ সেভ" সময়টা Save চাপার পর বদলায় কি না দেখুন।
+			</p></div>
+		<?php endif; ?>
 
 		<?php if ( ! $coupons_enabled ) : ?>
 			<div class="notice notice-error"><p>
