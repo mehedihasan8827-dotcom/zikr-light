@@ -92,29 +92,12 @@ $after3 = zl_exit_get_settings();
 check( 'ফিল্ড স্ট্রিপড হলে discount আগের মান (৫০) টেকে, ডিফল্ট ১০০ নয়', 50 === $after3['discount'], (string) $after3['discount'] );
 check( 'ফিল্ড স্ট্রিপড হলে হেডলাইন আগের মান টেকে, ডিফল্ট নয়', 'যাবেন না! {discount} ছাড় নিন!' === $after3['txt_headline'] );
 
-/* ---- v1.8.0: base64 ব্লব পথ (ফায়ারওয়াল-নিরাপদ সেভ) round-trip ---- */
-// JS যেভাবে পাঠায়: JSON → UTF-8 → base64 (এখানে PHP দিয়ে সমতুল্য বানাই)
-$js_data = array(
-	'enabled'        => '1',
-	'discount'       => '50',
-	'coupon'         => 'EXIT100',
-	'min_seconds'    => '10',
-	'txt_headline'   => 'যাবেন না! {discount} ছাড় নিন! 🎁',
-	'form_selector'  => '#order-form, form.woocommerce-checkout, .cartflows-container',
-	'trigger_scroll' => '1',
-);
-$blob = base64_encode( json_encode( $js_data, JSON_UNESCAPED_UNICODE ) );
-// ব্লবে কোনো WAF-ট্রিগারিং অক্ষর (< > { } . # , স্পেস) নেই তো?
-check( 'ব্লবে কোড-সদৃশ অক্ষর নেই (শুধু base64)', (bool) preg_match( '/^[A-Za-z0-9+\/=]+$/', $blob ), substr( $blob, 0, 24 ) . '…' );
-// সার্ভার হ্যান্ডলার যা করে: base64_decode → json_decode → sanitize
-$decoded = json_decode( base64_decode( $blob, true ), true );
-check( 'ব্লব খুলে বৈধ অ্যারে পাওয়া যায়', is_array( $decoded ) );
-$saved_via_blob = zl_exit_sanitize_settings( $decoded );
-update_option( ZL_EXIT_OPTION, $saved_via_blob );
-$final = zl_exit_get_settings();
-check( 'ব্লব পথে discount = ৫০ সেভ হয়', 50 === $final['discount'], (string) $final['discount'] );
-check( 'ব্লব পথে বাংলা+ইমোজি হেডলাইন অক্ষত থাকে', 'যাবেন না! {discount} ছাড় নিন! 🎁' === $final['txt_headline'] );
-check( 'ব্লব পথে form_selector (CSS) অক্ষত থাকে', '#order-form, form.woocommerce-checkout, .cartflows-container' === $final['form_selector'] );
-check( 'ব্লব পথে চেকবক্স (trigger_scroll) = ১', 1 === $final['trigger_scroll'] );
+/* ---- v1.9.0: আদর্শ Settings API পথে discount ঠিক ৫০ থাকে (৪৯ নয়) ---- */
+$post50 = $form_post;
+$post50['discount'] = '50';
+update_option( ZL_EXIT_OPTION, zl_exit_sanitize_settings( $post50 ) );
+$d50 = zl_exit_get_settings();
+check( 'discount 50 দিলে ঠিক 50 থাকে (49 নয়)', 50 === $d50['discount'], (string) $d50['discount'] );
+check( 'discount টাইপ integer', is_int( $d50['discount'] ) );
 
 echo empty( $GLOBALS['fail'] ) ? "\n===== সব পাস: সেভ-পাইপলাইনে কোনো বাগ নেই =====\n" : "\n===== বাগ পাওয়া গেছে! =====\n";

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ZL Exit Intent Discount Popup
  * Description: এক্সিট-ইনটেন্ট ডিসকাউন্ট পপআপ — WooCommerce/CartFlows ল্যান্ডিং পেজের জন্য। ভিজিটর নির্দিষ্ট সময় পেজে থাকার পর বেরিয়ে যেতে চাইলে ডিসকাউন্ট অফার দেখায় এবং কুপন AJAX-এ কার্টে অটো-অ্যাপ্লাই করে।
- * Version: 1.8.0
+ * Version: 1.9.0
  * Author: Mehedi Hasan
  * Requires at least: 5.8
  * Requires PHP: 7.2
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ZL_EXIT_VERSION', '1.8.0' );
+define( 'ZL_EXIT_VERSION', '1.9.0' );
 define( 'ZL_EXIT_OPTION', 'zl_exit_popup_settings' );
 
 /* ============================================================
@@ -86,51 +86,6 @@ function zl_exit_sanitize_settings( $input ) {
 add_action( 'admin_init', function () {
 	register_setting( 'zl_exit_popup', ZL_EXIT_OPTION, array( 'sanitize_callback' => 'zl_exit_sanitize_settings' ) );
 } );
-
-/**
- * ফায়ারওয়াল-নিরাপদ সেভ হ্যান্ডলার।
- * ফর্মটি options.php-এর বদলে এখানে POST করে। JavaScript সব ফিল্ড একটি
- * base64-এনকোডেড JSON ব্লবে (zl_exit_blob) গুটিয়ে পাঠায়, তাই Cloudflare/
- * mod_security কোড-সদৃশ কিছু দেখে না। এখানে ব্লব খুলে, একই sanitize
- * চালিয়ে, সেভ করা হয়। নিরাপত্তা: nonce + manage_options ক্যাপাবিলিটি।
- * JS বন্ধ থাকলে ফলব্যাক হিসেবে সরাসরি ফিল্ডও পড়া হয়।
- */
-add_action( 'admin_post_zl_exit_save', 'zl_exit_handle_save' );
-function zl_exit_handle_save() {
-	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( 'অনুমতি নেই।' );
-	}
-	check_admin_referer( 'zl_exit_save', 'zl_exit_nonce' );
-
-	$input = array();
-
-	// প্রধান পথ: base64(JSON) ব্লব
-	if ( ! empty( $_POST['zl_exit_blob'] ) ) {
-		$raw     = base64_decode( wp_unslash( $_POST['zl_exit_blob'] ), true ); // phpcs:ignore
-		$decoded = ( false !== $raw ) ? json_decode( $raw, true ) : null;
-		if ( is_array( $decoded ) ) {
-			$input = $decoded;
-		}
-	}
-
-	// ফলব্যাক: JS বন্ধ থাকলে সরাসরি ফিল্ড (WAF ব্লক না করলে)
-	if ( empty( $input ) && isset( $_POST[ ZL_EXIT_OPTION ] ) && is_array( $_POST[ ZL_EXIT_OPTION ] ) ) {
-		$input = wp_unslash( $_POST[ ZL_EXIT_OPTION ] ); // phpcs:ignore
-	}
-
-	update_option( ZL_EXIT_OPTION, zl_exit_sanitize_settings( $input ) );
-
-	wp_safe_redirect(
-		add_query_arg(
-			array(
-				'page'     => 'zl-exit-popup',
-				'zl_saved' => '1',
-			),
-			admin_url( 'options-general.php' )
-		)
-	);
-	exit;
-}
 
 /**
  * WooCommerce-এ কুপনটি না থাকলে নিজে থেকেই তৈরি করে দেয়; থাকলে
@@ -268,25 +223,16 @@ function zl_exit_render_settings_page() {
 		<p>কুপন ম্যানুয়ালি বানাতে হবে না — সেটিংস সেভ করলেই প্লাগইন নিজে থেকে
 			কুপনটি তৈরি/আপডেট করে দেয় (Fixed cart discount, Usage limit per user: 1)।</p>
 
-		<?php if ( ! empty( $_GET['zl_saved'] ) ) : ?>
-			<div class="notice notice-success is-dismissible"><p>✅ সেটিংস সেভ হয়েছে।</p></div>
-		<?php endif; ?>
-
 		<?php
 		/*
-		 * সেভ ফর্মটি WordPress-এর options.php-তে যায় না — যায় নিজস্ব
-		 * admin-post হ্যান্ডলারে (zl_exit_save)। কারণ Cloudflare/mod_security
-		 * ফর্মের ভেতরের কোড-সদৃশ লেখা (CSS সিলেক্টর, {discount}, ইমোজি)
-		 * দেখে POST ব্লক করছিল। নিচের ইনলাইন স্ক্রিপ্ট সাবমিটের ঠিক আগে
-		 * সব ফিল্ডকে একটি base64 ব্লবে গুটিয়ে ফেলে ও আসল ফিল্ডগুলোর name
-		 * সরিয়ে দেয় — ফায়ারওয়াল তখন শুধু নিরীহ base64 দেখে, কিছুতেই
-		 * ট্রিগার হয় না। সার্ভারে ব্লব খুলে একই sanitize চালিয়ে সেভ হয়।
+		 * সেভ ফর্মটি WordPress-এর আদর্শ Settings API (options.php) ব্যবহার
+		 * করে — ঠিক যেভাবে Settings → General সেভ হয়। এই পথটাই সার্ভার/
+		 * Cloudflare অনুমোদন করে (মাঠ-পরীক্ষায় প্রমাণিত)। আগের v1.8.0-এর
+		 * কাস্টম admin-post.php পথটা ফায়ারওয়াল ব্লক করছিল, তাই বাদ দেওয়া হলো।
 		 */
 		?>
-		<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" id="zl-exit-settings-form">
-			<input type="hidden" name="action" value="zl_exit_save">
-			<input type="hidden" name="zl_exit_blob" id="zl-exit-blob" value="">
-			<?php wp_nonce_field( 'zl_exit_save', 'zl_exit_nonce' ); ?>
+		<form method="post" action="options.php" id="zl-exit-settings-form">
+			<?php settings_fields( 'zl_exit_popup' ); ?>
 			<table class="form-table" role="presentation">
 				<tr>
 					<th scope="row">পপআপ চালু</th>
@@ -383,32 +329,6 @@ function zl_exit_render_settings_page() {
 			</table>
 			<?php submit_button(); ?>
 		</form>
-		<script>
-		(function () {
-			var form = document.getElementById('zl-exit-settings-form');
-			if (!form) return;
-			var PREFIX = <?php echo wp_json_encode( ZL_EXIT_OPTION ); ?>; // zl_exit_popup_settings
-			form.addEventListener('submit', function () {
-				var data = {};
-				// PREFIX[key] ধাঁচের সব ফিল্ড সংগ্রহ করি
-				form.querySelectorAll('[name^="' + PREFIX + '["]').forEach(function (el) {
-					var m = el.name.match(/\[([^\]]+)\]/);
-					if (!m) return;
-					var key = m[1];
-					if (el.type === 'checkbox') {
-						if (el.checked) { data[key] = el.value; } // চেক না থাকলে বাদ (= আনচেক)
-					} else {
-						data[key] = el.value;
-					}
-					el.removeAttribute('name'); // আসল মান আর POST-এ যাবে না — শুধু ব্লব যাবে
-				});
-				// UTF-8 নিরাপদ base64 (বাংলা/ইমোজির জন্য)
-				var json = JSON.stringify(data);
-				document.getElementById('zl-exit-blob').value =
-					btoa(unescape(encodeURIComponent(json)));
-			});
-		})();
-		</script>
 		<?php if ( ! empty( $s['saved_at'] ) ) : ?>
 			<p><strong>🕒 সর্বশেষ সেভ হয়েছে:</strong>
 				<?php echo esc_html( human_time_diff( (int) $s['saved_at'], time() ) ); ?> আগে
