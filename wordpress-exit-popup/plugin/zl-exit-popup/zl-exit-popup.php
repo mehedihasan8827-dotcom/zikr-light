@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ZL Exit Intent Discount Popup
  * Description: এক্সিট-ইনটেন্ট ডিসকাউন্ট পপআপ — WooCommerce/CartFlows ল্যান্ডিং পেজের জন্য। ভিজিটর নির্দিষ্ট সময় পেজে থাকার পর বেরিয়ে যেতে চাইলে ডিসকাউন্ট অফার দেখায় এবং কুপন AJAX-এ কার্টে অটো-অ্যাপ্লাই করে।
- * Version: 2.0.0
+ * Version: 2.1.0
  * Author: Mehedi Hasan
  * Requires at least: 5.8
  * Requires PHP: 7.2
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ZL_EXIT_VERSION', '2.0.0' );
+define( 'ZL_EXIT_VERSION', '2.1.0' );
 define( 'ZL_EXIT_OPTION', 'zl_exit_popup_settings' );
 
 /* ============================================================
@@ -108,6 +108,24 @@ function zl_exit_sanitize_settings( $input ) {
 
 add_action( 'admin_init', function () {
 	register_setting( 'zl_exit_popup', ZL_EXIT_OPTION, array( 'sanitize_callback' => 'zl_exit_sanitize_settings' ) );
+} );
+
+/**
+ * AJAX সেভ — admin-ajax.php দরজা দিয়ে। এই দরজাটা এই সাইটে প্রমাণিতভাবে
+ * খোলা: পপআপের কুপন-অ্যাপ্লাইও এখান দিয়েই POST করে এবং কাজ করে।
+ * পেলোড একই base64 স্ট্রিং (কোনো ইমোজি/বাংলা/CSS POST-এ যায় না)।
+ * নিরাপত্তা: manage_options + nonce। সাড়া JSON — ব্যর্থ হলে ব্রাউজারে
+ * স্ট্যাটাস-কোডসহ এরর দেখা যায়, নীরব রোলব্যাক আর হয় না।
+ */
+add_action( 'wp_ajax_zl_exit_save_settings', function () {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		wp_send_json_error( array( 'message' => 'no-permission' ), 403 );
+	}
+	check_ajax_referer( 'zl_exit_ajax_save', 'nonce' );
+	$payload = isset( $_POST['payload'] ) ? trim( wp_unslash( $_POST['payload'] ) ) : ''; // phpcs:ignore
+	$clean   = zl_exit_sanitize_settings( $payload );
+	update_option( ZL_EXIT_OPTION, $clean );
+	wp_send_json_success( array( 'saved_at' => (int) $clean['saved_at'] ) );
 } );
 
 /**
@@ -258,6 +276,11 @@ function zl_exit_render_settings_page() {
 		 *    চেয়েও সাদামাটা পেলোড, ফিল্টারের ট্রিগার করার কিছু নেই।
 		 */
 		?>
+		<?php if ( ! empty( $_GET['zl_saved'] ) ) : ?>
+			<div class="notice notice-success is-dismissible"><p>✅ সেটিংস সেভ হয়েছে।</p></div>
+		<?php endif; ?>
+		<div id="zl-save-result" style="display:none;border-left:4px solid #d63638;background:#fff;padding:12px;margin:12px 0;white-space:pre-wrap;word-break:break-all"></div>
+
 		<form method="post" action="options.php" id="zl-exit-settings-form">
 			<?php settings_fields( 'zl_exit_popup' ); ?>
 			<input type="hidden" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>" id="zl-exit-blob" value="">
@@ -364,18 +387,57 @@ function zl_exit_render_settings_page() {
 		(function () {
 			var form = document.getElementById('zl-exit-settings-form');
 			if (!form) return;
-			form.addEventListener('submit', function () {
+			var NONCE = <?php echo wp_json_encode( wp_create_nonce( 'zl_exit_ajax_save' ) ); ?>;
+
+			function buildPayload() {
 				var data = {};
 				form.querySelectorAll('[name^="zlx["]').forEach(function (el) {
 					var m = el.name.match(/\[([^\]]+)\]/);
 					if (!m) return;
 					// চেকবক্স স্পষ্ট '1'/'0' হিসেবে যায় — আনচেক মানে '0'
 					data[m[1]] = (el.type === 'checkbox') ? (el.checked ? '1' : '0') : el.value;
-					el.removeAttribute('name'); // আসল লেখা POST-এ যাবে না
 				});
 				// UTF-8 নিরাপদ base64 (বাংলা/ইমোজি অক্ষত থাকে)
-				document.getElementById('zl-exit-blob').value =
-					'b64:' + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+				return 'b64:' + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+			}
+
+			function showError(title, detail) {
+				var box = document.getElementById('zl-save-result');
+				box.style.display = 'block';
+				box.textContent = '❌ সেভ ব্যর্থ — ' + title + '\n' +
+					'সার্ভারের জবাব (প্রথম অংশ):\n' +
+					String(detail || '').replace(/<[^>]*>/g, ' ').slice(0, 400) +
+					'\n\n👉 এই বাক্সের স্ক্রিনশট Claude-কে পাঠান — এতেই বোঝা যাবে ঠিক কে আটকাচ্ছে।';
+				box.scrollIntoView({ behavior: 'smooth' });
+			}
+
+			form.addEventListener('submit', function (ev) {
+				ev.preventDefault();
+				var payload = buildPayload();
+				var body = new URLSearchParams();
+				body.set('action', 'zl_exit_save_settings');
+				body.set('nonce', NONCE);
+				body.set('payload', payload);
+				fetch(ajaxurl, { method: 'POST', credentials: 'same-origin', body: body })
+					.then(function (r) {
+						return r.text().then(function (t) { return { status: r.status, ok: r.ok, text: t }; });
+					})
+					.then(function (res) {
+						var j = null;
+						try { j = JSON.parse(res.text); } catch (e) {}
+						if (res.ok && j && j.success) {
+							// সফল — সবুজ ব্যানারসহ পেজ রিলোড
+							window.location.href = window.location.pathname + '?page=zl-exit-popup&zl_saved=1';
+						} else {
+							showError('HTTP ' + res.status, res.text);
+						}
+					})
+					.catch(function () {
+						// নেটওয়ার্ক-স্তরে আটকে গেলে শেষ চেষ্টা: ক্লাসিক options.php পথ
+						form.querySelectorAll('[name^="zlx["]').forEach(function (el) { el.removeAttribute('name'); });
+						document.getElementById('zl-exit-blob').value = payload;
+						HTMLFormElement.prototype.submit.call(form);
+					});
 			});
 		})();
 		</script>
