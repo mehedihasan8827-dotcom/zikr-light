@@ -71,11 +71,13 @@ check( 'হেডলাইন বদলেছে', 'যাবেন না! {dis
 check( 'স্ক্রল-ট্রিগার ০ → ১ হয়েছে', 1 === $after['trigger_scroll'], $before['trigger_scroll'] . '→' . $after['trigger_scroll'] );
 check( 'saved_at টাইমস্ট্যাম্প বসেছে', $after['saved_at'] >= time() - 5 );
 
-/* ---- আনচেক-করা চেকবক্স (enabled বন্ধ): ফর্মে ফিল্ডই আসে না ---- */
-unset( $form_post['enabled'], $form_post['trigger_scroll'] );
+/* ---- আনচেক-করা চেকবক্স: v2.0.0-এ JS স্পষ্ট '0' পাঠায় ---- */
+$form_post['enabled']        = '0';
+$form_post['trigger_scroll'] = '0';
 update_option( ZL_EXIT_OPTION, zl_exit_sanitize_settings( $form_post ) );
 $after2 = zl_exit_get_settings();
-check( 'চেকবক্স আনচেক করলে ০ সেভ হয়', 0 === $after2['enabled'] && 0 === $after2['trigger_scroll'] );
+check( 'চেকবক্স আনচেক (স্পষ্ট ০) করলে ০ সেভ হয়', 0 === $after2['enabled'] && 0 === $after2['trigger_scroll'] );
+$form_post['enabled'] = '1'; // পরের টেস্টের জন্য আবার চালু
 
 /* ---- ডাবল-sanitize (WP-র পরিচিত আচরণ): মান নষ্ট হয় না ---- */
 $twice = zl_exit_sanitize_settings( zl_exit_sanitize_settings( $form_post ) );
@@ -92,12 +94,44 @@ $after3 = zl_exit_get_settings();
 check( 'ফিল্ড স্ট্রিপড হলে discount আগের মান (৫০) টেকে, ডিফল্ট ১০০ নয়', 50 === $after3['discount'], (string) $after3['discount'] );
 check( 'ফিল্ড স্ট্রিপড হলে হেডলাইন আগের মান টেকে, ডিফল্ট নয়', 'যাবেন না! {discount} ছাড় নিন!' === $after3['txt_headline'] );
 
-/* ---- v1.9.0: আদর্শ Settings API পথে discount ঠিক ৫০ থাকে (৪৯ নয়) ---- */
-$post50 = $form_post;
-$post50['discount'] = '50';
-update_option( ZL_EXIT_OPTION, zl_exit_sanitize_settings( $post50 ) );
-$d50 = zl_exit_get_settings();
-check( 'discount 50 দিলে ঠিক 50 থাকে (49 নয়)', 50 === $d50['discount'], (string) $d50['discount'] );
-check( 'discount টাইপ integer', is_int( $d50['discount'] ) );
+/* ---- v2.0.0: একক base64 স্ট্রিং-পেলোড (ব্রাউজারের JS যা পাঠায়) ---- */
+$js_fields = array(
+	'enabled'         => '1',
+	'discount'        => '50',
+	'coupon'          => 'EXIT100',
+	'min_seconds'     => '10',
+	'offer_minutes'   => '15',
+	'frequency_hours' => '24',
+	'page_ids'        => '',
+	'form_selector'   => '#order-form, form.woocommerce-checkout, .cartflows-container',
+	'txt_badge'       => '🎁 শুধু আপনার জন্য বিশেষ অফার',
+	'txt_headline'    => 'যাবেন না বস! {discount} ছাড় নিন! 🎁',
+	'txt_desc'        => 'ডিসকাউন্টটি মূল দাম থেকে সরাসরি কেটে যাবে।',
+	'txt_timer'       => '⏳ অফার শেষ হতে বাকি:',
+	'txt_cta'         => 'ডিসকাউন্ট নিয়ে অর্ডার করুন ➜',
+	'txt_no'          => 'না ধন্যবাদ',
+	'txt_applied'     => '🎉 অভিনন্দন! {discount} ডিসকাউন্ট যোগ হয়েছে।',
+	'trigger_scroll'  => '0',
+);
+$payload = 'b64:' . base64_encode( json_encode( $js_fields, JSON_UNESCAPED_UNICODE ) );
+check( 'পেলোডে ইমোজি/বাংলা/CSS/অ্যারে কিছু নেই (শুধু b64: + base64)',
+	(bool) preg_match( '/^b64:[A-Za-z0-9+\/=]+$/', $payload ), substr( $payload, 0, 24 ) . '…' );
+
+// options.php sanitize-কে ঠিক এই STRING-টাই দেয়
+update_option( ZL_EXIT_OPTION, zl_exit_sanitize_settings( $payload ) );
+$v2 = zl_exit_get_settings();
+check( 'ব্লব পথে discount ঠিক ৫০ (৪৯ নয়)', 50 === $v2['discount'] && is_int( $v2['discount'] ), (string) $v2['discount'] );
+check( 'ব্লব পথে সময় ১০ সেকেন্ড', 10 === $v2['min_seconds'] );
+check( 'ব্লব পথে বাংলা+ইমোজি হেডলাইন অক্ষত', 'যাবেন না বস! {discount} ছাড় নিন! 🎁' === $v2['txt_headline'] );
+check( 'ব্লব পথে CSS সিলেক্টর অক্ষত', '#order-form, form.woocommerce-checkout, .cartflows-container' === $v2['form_selector'] );
+check( 'ব্লব পথে চেকবক্স ০ = আনচেক', 0 === $v2['trigger_scroll'] );
+
+// ফিল্টার সব মুছে খালি স্ট্রিং পাঠালে: আগের সেটিংস অক্ষত
+$before_empty = zl_exit_get_settings();
+$res_empty    = zl_exit_sanitize_settings( '' );
+check( 'খালি পেলোডে আগের সেটিংস অক্ষত থাকে', $res_empty === $before_empty );
+// আবর্জনা পাঠালেও তাই
+$res_junk = zl_exit_sanitize_settings( 'b64:!!!not-base64!!!' );
+check( 'নষ্ট পেলোডেও আগের সেটিংস অক্ষত থাকে', $res_junk === $before_empty );
 
 echo empty( $GLOBALS['fail'] ) ? "\n===== সব পাস: সেভ-পাইপলাইনে কোনো বাগ নেই =====\n" : "\n===== বাগ পাওয়া গেছে! =====\n";

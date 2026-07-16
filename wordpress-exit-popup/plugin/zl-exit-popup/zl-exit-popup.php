@@ -2,7 +2,7 @@
 /**
  * Plugin Name: ZL Exit Intent Discount Popup
  * Description: এক্সিট-ইনটেন্ট ডিসকাউন্ট পপআপ — WooCommerce/CartFlows ল্যান্ডিং পেজের জন্য। ভিজিটর নির্দিষ্ট সময় পেজে থাকার পর বেরিয়ে যেতে চাইলে ডিসকাউন্ট অফার দেখায় এবং কুপন AJAX-এ কার্টে অটো-অ্যাপ্লাই করে।
- * Version: 1.9.0
+ * Version: 2.0.0
  * Author: Mehedi Hasan
  * Requires at least: 5.8
  * Requires PHP: 7.2
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'ZL_EXIT_VERSION', '1.9.0' );
+define( 'ZL_EXIT_VERSION', '2.0.0' );
 define( 'ZL_EXIT_OPTION', 'zl_exit_popup_settings' );
 
 /* ============================================================
@@ -57,13 +57,36 @@ function zl_exit_get_settings() {
 }
 
 function zl_exit_sanitize_settings( $input ) {
-	// অনুপস্থিত ফিল্ডের জন্য ফলব্যাক = বর্তমানে সেভ করা মান (ডিফল্ট নয়)।
-	// কারণ: সিকিউরিটি ফায়ারওয়াল/mod_security POST থেকে কিছু ফিল্ড ফেলে
-	// দিলে, আগের মানই টিকে থাকবে — পুরো সেটিংস ডিফল্টে ফিরে গিয়ে "মুছে
-	// যাওয়া" মনে হবে না। চেকবক্সের ক্ষেত্রে অনুপস্থিত = আনচেক (ইচ্ছাকৃত)।
 	$cur = zl_exit_get_settings();
+
+	/*
+	 * সেভ-পেলোড এখন একটিমাত্র base64(JSON) স্ট্রিং হিসেবে আসে ("b64:..." )।
+	 * কারণ (মাঠ-পরীক্ষায় প্রমাণিত): প্রথম সংস্করণের সাদামাটা ফর্ম
+	 * options.php দিয়ে সেভ হয়, কিন্তু পরের সংস্করণগুলোর ফর্মে ইমোজি/
+	 * বাংলা/CSS-ভরা ফিল্ড যোগ হওয়ার পর সার্ভারের ফিল্টার POST আটকে দেয়।
+	 * base64-এ মোড়ানো স্ট্রিংয়ে ওসব কিছুই থাকে না — শুধু A-Za-z0-9+/=।
+	 */
+	if ( is_string( $input ) ) {
+		$blob  = trim( $input );
+		$input = array();
+		if ( 0 === strpos( $blob, 'b64:' ) ) {
+			$raw = base64_decode( substr( $blob, 4 ), true );
+			$dec = ( false !== $raw ) ? json_decode( $raw, true ) : null;
+			if ( is_array( $dec ) ) {
+				$input = $dec;
+			}
+		}
+	}
+
+	// কিছুই না পৌঁছালে (JS বন্ধ / ফিল্টারে আটকে গেলে) আগের সেটিংসই
+	// অক্ষত থাকবে — কখনোই ডিফল্টে মুছে যাবে না
+	if ( ! is_array( $input ) || empty( $input ) ) {
+		return $cur;
+	}
+
 	return array(
-		'enabled'         => empty( $input['enabled'] ) ? 0 : 1,
+		// চেকবক্স: JS সবসময় স্পষ্ট '1'/'0' পাঠায়; ফিল্ড অনুপস্থিত = আগের মান
+		'enabled'         => isset( $input['enabled'] ) ? ( empty( $input['enabled'] ) ? 0 : 1 ) : $cur['enabled'],
 		'discount'        => max( 1, absint( isset( $input['discount'] ) ? $input['discount'] : $cur['discount'] ) ),
 		'coupon'          => strtoupper( preg_replace( '/[^A-Za-z0-9_-]/', '', isset( $input['coupon'] ) ? $input['coupon'] : $cur['coupon'] ) ),
 		'min_seconds'     => max( 5, absint( isset( $input['min_seconds'] ) ? $input['min_seconds'] : $cur['min_seconds'] ) ),
@@ -78,7 +101,7 @@ function zl_exit_sanitize_settings( $input ) {
 		'txt_cta'         => sanitize_text_field( isset( $input['txt_cta'] ) ? $input['txt_cta'] : $cur['txt_cta'] ),
 		'txt_no'          => sanitize_text_field( isset( $input['txt_no'] ) ? $input['txt_no'] : $cur['txt_no'] ),
 		'txt_applied'     => sanitize_textarea_field( isset( $input['txt_applied'] ) ? $input['txt_applied'] : $cur['txt_applied'] ),
-		'trigger_scroll'  => empty( $input['trigger_scroll'] ) ? 0 : 1,
+		'trigger_scroll'  => isset( $input['trigger_scroll'] ) ? ( empty( $input['trigger_scroll'] ) ? 0 : 1 ) : $cur['trigger_scroll'],
 		'saved_at'        => time(),
 	);
 }
@@ -225,60 +248,68 @@ function zl_exit_render_settings_page() {
 
 		<?php
 		/*
-		 * সেভ ফর্মটি WordPress-এর আদর্শ Settings API (options.php) ব্যবহার
-		 * করে — ঠিক যেভাবে Settings → General সেভ হয়। এই পথটাই সার্ভার/
-		 * Cloudflare অনুমোদন করে (মাঠ-পরীক্ষায় প্রমাণিত)। আগের v1.8.0-এর
-		 * কাস্টম admin-post.php পথটা ফায়ারওয়াল ব্লক করছিল, তাই বাদ দেওয়া হলো।
+		 * সেভ-পদ্ধতি (মাঠ-পরীক্ষার দুই প্রমাণ মিলিয়ে):
+		 * ১) দরজা: প্রথম সংস্করণের মতোই WordPress-এর আদর্শ options.php —
+		 *    এই পথ সার্ভার অনুমোদন করে (Tagline ও প্রথম সংস্করণে প্রমাণিত)।
+		 * ২) মালপত্র: দৃশ্যমান ফিল্ডগুলোর name অনিবন্ধিত (zlx) — এগুলো
+		 *    সাবমিটের সময় name হারায়, POST-এ যায়ই না। সব মান JS একটিমাত্র
+		 *    base64 স্ট্রিংয়ে মুড়িয়ে নিবন্ধিত hidden ফিল্ডে বসায়। ফলে POST-এ
+		 *    ইমোজি/বাংলা/CSS/নেস্টেড অ্যারে কিছুই থাকে না — প্রথম সংস্করণের
+		 *    চেয়েও সাদামাটা পেলোড, ফিল্টারের ট্রিগার করার কিছু নেই।
 		 */
 		?>
 		<form method="post" action="options.php" id="zl-exit-settings-form">
 			<?php settings_fields( 'zl_exit_popup' ); ?>
+			<input type="hidden" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>" id="zl-exit-blob" value="">
+			<noscript><div class="notice notice-error"><p>
+				সেটিংস সেভ করতে ব্রাউজারে JavaScript চালু থাকা প্রয়োজন।
+			</p></div></noscript>
 			<table class="form-table" role="presentation">
 				<tr>
 					<th scope="row">পপআপ চালু</th>
-					<td><label><input type="checkbox" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[enabled]" value="1" <?php checked( $s['enabled'], 1 ); ?>> সক্রিয়</label></td>
+					<td><label><input type="checkbox" name="zlx[enabled]" value="1" <?php checked( $s['enabled'], 1 ); ?>> সক্রিয়</label></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="zl-discount">ডিসকাউন্ট (টাকা)</label></th>
-					<td><input id="zl-discount" type="number" min="1" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[discount]" value="<?php echo esc_attr( $s['discount'] ); ?>" class="small-text"></td>
+					<td><input id="zl-discount" type="number" min="1" name="zlx[discount]" value="<?php echo esc_attr( $s['discount'] ); ?>" class="small-text"></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="zl-coupon">WooCommerce কুপন কোড</label></th>
 					<td>
-						<input id="zl-coupon" type="text" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[coupon]" value="<?php echo esc_attr( $s['coupon'] ); ?>" class="regular-text">
+						<input id="zl-coupon" type="text" name="zlx[coupon]" value="<?php echo esc_attr( $s['coupon'] ); ?>" class="regular-text">
 						<p class="description">এই কোডের কুপনটি WooCommerce-এ থাকতে হবে; শুধু এটিই অটো-অ্যাপ্লাই হবে।</p>
 					</td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="zl-seconds">কত সেকেন্ড পরে সক্রিয় হবে</label></th>
-					<td><input id="zl-seconds" type="number" min="5" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[min_seconds]" value="<?php echo esc_attr( $s['min_seconds'] ); ?>" class="small-text"> সেকেন্ড</td>
+					<td><input id="zl-seconds" type="number" min="5" name="zlx[min_seconds]" value="<?php echo esc_attr( $s['min_seconds'] ); ?>" class="small-text"> সেকেন্ড</td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="zl-offer">কাউন্টডাউন টাইমার</label></th>
-					<td><input id="zl-offer" type="number" min="1" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[offer_minutes]" value="<?php echo esc_attr( $s['offer_minutes'] ); ?>" class="small-text"> মিনিট</td>
+					<td><input id="zl-offer" type="number" min="1" name="zlx[offer_minutes]" value="<?php echo esc_attr( $s['offer_minutes'] ); ?>" class="small-text"> মিনিট</td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="zl-freq">আবার দেখানোর ব্যবধান</label></th>
-					<td><input id="zl-freq" type="number" min="1" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[frequency_hours]" value="<?php echo esc_attr( $s['frequency_hours'] ); ?>" class="small-text"> ঘণ্টা</td>
+					<td><input id="zl-freq" type="number" min="1" name="zlx[frequency_hours]" value="<?php echo esc_attr( $s['frequency_hours'] ); ?>" class="small-text"> ঘণ্টা</td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="zl-pages">নির্দিষ্ট পেজ ID</label></th>
 					<td>
-						<input id="zl-pages" type="text" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[page_ids]" value="<?php echo esc_attr( $s['page_ids'] ); ?>" class="regular-text" placeholder="যেমন: 12,34">
+						<input id="zl-pages" type="text" name="zlx[page_ids]" value="<?php echo esc_attr( $s['page_ids'] ); ?>" class="regular-text" placeholder="যেমন: 12,34">
 						<p class="description">খালি রাখলে সব পেজে চলবে। শুধু ল্যান্ডিং পেজে চালাতে সেই পেজের ID দিন (কমা দিয়ে একাধিক)।</p>
 					</td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="zl-selector">অর্ডার ফর্মের CSS সিলেক্টর</label></th>
 					<td>
-						<input id="zl-selector" type="text" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[form_selector]" value="<?php echo esc_attr( $s['form_selector'] ); ?>" class="large-text">
+						<input id="zl-selector" type="text" name="zlx[form_selector]" value="<?php echo esc_attr( $s['form_selector'] ); ?>" class="large-text">
 						<p class="description">ডিসকাউন্ট নেওয়ার পর পেজ এখানে স্ক্রল করবে। ডিফল্টেই CartFlows/WooCommerce চেকআউট ধরা পড়ে।</p>
 					</td>
 				</tr>
 				<tr>
 					<th scope="row">দ্রুত স্ক্রল-আপ ট্রিগার</th>
 					<td>
-						<label><input type="checkbox" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[trigger_scroll]" value="1" <?php checked( $s['trigger_scroll'], 1 ); ?>> চালু</label>
+						<label><input type="checkbox" name="zlx[trigger_scroll]" value="1" <?php checked( $s['trigger_scroll'], 1 ); ?>> চালু</label>
 						<p class="description">চালু থাকলে দ্রুত উপরে স্ক্রল করলেও পপআপ আসে। স্বাভাবিক পাঠকও
 							উপরে ফিরে যান বলে এটি বেশি ফায়ার হতে পারে — ডিফল্টে বন্ধ।
 							ডেস্কটপ মাউস-এক্সিট ও মোবাইল ব্যাক-বাটন ট্রিগার সবসময় চালু থাকে।</p>
@@ -294,41 +325,60 @@ function zl_exit_render_settings_page() {
 			<table class="form-table" role="presentation">
 				<tr>
 					<th scope="row"><label for="zl-txt-badge">উপরের ছোট ব্যাজ</label></th>
-					<td><input id="zl-txt-badge" type="text" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[txt_badge]" value="<?php echo esc_attr( $s['txt_badge'] ); ?>" class="large-text"></td>
+					<td><input id="zl-txt-badge" type="text" name="zlx[txt_badge]" value="<?php echo esc_attr( $s['txt_badge'] ); ?>" class="large-text"></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="zl-txt-headline">বড় হেডলাইন</label></th>
 					<td>
-						<input id="zl-txt-headline" type="text" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[txt_headline]" value="<?php echo esc_attr( $s['txt_headline'] ); ?>" class="large-text">
+						<input id="zl-txt-headline" type="text" name="zlx[txt_headline]" value="<?php echo esc_attr( $s['txt_headline'] ); ?>" class="large-text">
 						<p class="description"><code>{discount}</code> অংশটি লাল রঙে ডিসকাউন্টের পরিমাণ দেখাবে।</p>
 					</td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="zl-txt-desc">বিবরণ (ছোট লেখা)</label></th>
-					<td><textarea id="zl-txt-desc" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[txt_desc]" class="large-text" rows="2"><?php echo esc_textarea( $s['txt_desc'] ); ?></textarea></td>
+					<td><textarea id="zl-txt-desc" name="zlx[txt_desc]" class="large-text" rows="2"><?php echo esc_textarea( $s['txt_desc'] ); ?></textarea></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="zl-txt-timer">টাইমারের লেবেল</label></th>
-					<td><input id="zl-txt-timer" type="text" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[txt_timer]" value="<?php echo esc_attr( $s['txt_timer'] ); ?>" class="large-text"></td>
+					<td><input id="zl-txt-timer" type="text" name="zlx[txt_timer]" value="<?php echo esc_attr( $s['txt_timer'] ); ?>" class="large-text"></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="zl-txt-cta">সবুজ বাটনের লেখা</label></th>
-					<td><input id="zl-txt-cta" type="text" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[txt_cta]" value="<?php echo esc_attr( $s['txt_cta'] ); ?>" class="large-text"></td>
+					<td><input id="zl-txt-cta" type="text" name="zlx[txt_cta]" value="<?php echo esc_attr( $s['txt_cta'] ); ?>" class="large-text"></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="zl-txt-no">নিচের ছোট লিংক</label></th>
-					<td><input id="zl-txt-no" type="text" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[txt_no]" value="<?php echo esc_attr( $s['txt_no'] ); ?>" class="large-text"></td>
+					<td><input id="zl-txt-no" type="text" name="zlx[txt_no]" value="<?php echo esc_attr( $s['txt_no'] ); ?>" class="large-text"></td>
 				</tr>
 				<tr>
 					<th scope="row"><label for="zl-txt-applied">ডিসকাউন্ট নেওয়ার পর সবুজ বার্তা</label></th>
 					<td>
-						<textarea id="zl-txt-applied" name="<?php echo esc_attr( ZL_EXIT_OPTION ); ?>[txt_applied]" class="large-text" rows="2"><?php echo esc_textarea( $s['txt_applied'] ); ?></textarea>
+						<textarea id="zl-txt-applied" name="zlx[txt_applied]" class="large-text" rows="2"><?php echo esc_textarea( $s['txt_applied'] ); ?></textarea>
 						<p class="description">বাটন চাপার পর অর্ডার ফর্মের উপরে যে বার্তা দেখা যায়।</p>
 					</td>
 				</tr>
 			</table>
 			<?php submit_button(); ?>
 		</form>
+		<script>
+		(function () {
+			var form = document.getElementById('zl-exit-settings-form');
+			if (!form) return;
+			form.addEventListener('submit', function () {
+				var data = {};
+				form.querySelectorAll('[name^="zlx["]').forEach(function (el) {
+					var m = el.name.match(/\[([^\]]+)\]/);
+					if (!m) return;
+					// চেকবক্স স্পষ্ট '1'/'0' হিসেবে যায় — আনচেক মানে '0'
+					data[m[1]] = (el.type === 'checkbox') ? (el.checked ? '1' : '0') : el.value;
+					el.removeAttribute('name'); // আসল লেখা POST-এ যাবে না
+				});
+				// UTF-8 নিরাপদ base64 (বাংলা/ইমোজি অক্ষত থাকে)
+				document.getElementById('zl-exit-blob').value =
+					'b64:' + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+			});
+		})();
+		</script>
 		<?php if ( ! empty( $s['saved_at'] ) ) : ?>
 			<p><strong>🕒 সর্বশেষ সেভ হয়েছে:</strong>
 				<?php echo esc_html( human_time_diff( (int) $s['saved_at'], time() ) ); ?> আগে
