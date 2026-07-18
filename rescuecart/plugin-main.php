@@ -29,18 +29,20 @@ function rescuecart_default_settings() {
 	return array(
 		'enabled'               => 'yes',
 		'discount_type'         => 'fixed_cart', // fixed_cart | percent.
-		'discount_amount'       => 50,
-		'coupon_expiry_minutes' => 15,
-		'cooldown_hours'        => 24,
+		'discount_amount'       => 40,
+		'coupon_expiry_minutes' => 5,
+		'cooldown_hours'        => 4,
 		'allow_stacking'        => 'no',
-		'sensitivity'           => 'balanced', // low | balanced | aggressive.
+		'min_dwell_seconds'     => 20,
 		'extra_page_ids'        => '',
 		'pixel_event'           => 'yes',
-		'popup_title'           => __( 'Wait! Don’t leave yet 🎁', 'rescuecart' ),
-		'popup_message'         => __( 'Complete your order in the next few minutes and get {discount} off — applied automatically.', 'rescuecart' ),
-		'popup_button'          => __( 'Claim {discount} Off & Checkout', 'rescuecart' ),
-		'popup_dismiss'         => __( 'No thanks, I’ll pay full price', 'rescuecart' ),
-		'applied_message'       => __( '{discount} discount applied — finish your order before it expires!', 'rescuecart' ),
+		// Store-facing copy ships in Bengali by default (fully editable in the dashboard).
+		'popup_title'           => 'থামুন! এখনই চলে যাচ্ছেন? 🎁',
+		'popup_message'         => 'একটু দাঁড়ান! এখনই অর্ডার করলে {discount} টাকা ছাড়!',
+		'popup_button'          => 'ডিসকাউন্ট নিয়ে অর্ডার করুন →',
+		'popup_dismiss'         => 'না ধন্যবাদ, আমি এখন কিনব না',
+		'applied_message'       => 'অভিনন্দন! {discount} টাকা ডিসকাউন্ট যোগ হয়েছে – সময় শেষ হওয়ার আগেই অর্ডারটি কনফার্ম করুন',
+		'countdown_label'       => 'অফারটির সময় বাকি আছে:',
 	);
 }
 
@@ -55,36 +57,21 @@ function rescuecart_get_settings() {
 }
 
 /**
- * Trigger-sensitivity presets consumed by the frontend intent engine.
+ * Fixed engine tuning consumed by the frontend intent engine. The single
+ * admin-facing control is the minimum dwell time; once that gate opens,
+ * fast up-scroll and the back button fire instantly, while softer signals
+ * (idle, tab-return, field abandonment) still combine via the intent score.
  *
- * @return array<string,array<string,int|float>>
+ * @param array $settings Plugin settings.
+ * @return array<string,int|float>
  */
-function rescuecart_sensitivity_presets() {
+function rescuecart_engine_config( $settings ) {
 	return array(
-		'low'        => array(
-			'fireThreshold' => 80,
-			'armDelay'      => 12,
-			'dwellSeconds'  => 45,
-			'scrollDepth'   => 0.60,
-			'upVelocity'    => 1.6,
-			'idleSeconds'   => 30,
-		),
-		'balanced'   => array(
-			'fireThreshold' => 60,
-			'armDelay'      => 8,
-			'dwellSeconds'  => 30,
-			'scrollDepth'   => 0.50,
-			'upVelocity'    => 1.2,
-			'idleSeconds'   => 20,
-		),
-		'aggressive' => array(
-			'fireThreshold' => 45,
-			'armDelay'      => 5,
-			'dwellSeconds'  => 20,
-			'scrollDepth'   => 0.35,
-			'upVelocity'    => 0.9,
-			'idleSeconds'   => 12,
-		),
+		'minDwellSeconds' => (int) $settings['min_dwell_seconds'],
+		'fireThreshold'   => 60,
+		'scrollDepth'     => 0.50,
+		'upVelocity'      => 1.2,
+		'idleSeconds'     => 20,
 	);
 }
 
@@ -256,8 +243,6 @@ final class RescueCart_Plugin {
 		}
 
 		$settings = rescuecart_get_settings();
-		$presets  = rescuecart_sensitivity_presets();
-		$preset   = isset( $presets[ $settings['sensitivity'] ] ) ? $presets[ $settings['sensitivity'] ] : $presets['balanced'];
 
 		wp_enqueue_style(
 			'rescuecart',
@@ -286,7 +271,7 @@ final class RescueCart_Plugin {
 					'claim'      => WC_AJAX::get_endpoint( 'rescuecart_claim' ),
 					'impression' => WC_AJAX::get_endpoint( 'rescuecart_impression' ),
 				),
-				'preset'        => $preset,
+				'engine'        => rescuecart_engine_config( $settings ),
 				'cooldownHours' => (int) $settings['cooldown_hours'],
 				'expiryMinutes' => (int) $settings['coupon_expiry_minutes'],
 				'pixelEvent'    => ( 'yes' === $settings['pixel_event'] ),
@@ -325,7 +310,7 @@ final class RescueCart_Plugin {
 				<h2 id="rescuecart-title"><?php echo esc_html( rescuecart_render_text( $settings['popup_title'], $settings ) ); ?></h2>
 				<p class="rescuecart-message"><?php echo esc_html( rescuecart_render_text( $settings['popup_message'], $settings ) ); ?></p>
 				<p class="rescuecart-timer" aria-live="polite">
-					<span class="rescuecart-timer-label"><?php esc_html_e( 'Offer expires in', 'rescuecart' ); ?></span>
+					<span class="rescuecart-timer-label"><?php echo esc_html( rescuecart_render_text( $settings['countdown_label'], $settings ) ); ?></span>
 					<span class="rescuecart-timer-value" data-rescuecart-countdown><?php echo esc_html( sprintf( '%02d:00', $minutes ) ); ?></span>
 				</p>
 				<button type="button" class="rescuecart-claim" data-rescuecart-claim>

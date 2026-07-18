@@ -18,13 +18,15 @@
 		return;
 	}
 
-	var preset = cfg.preset || {};
-	var FIRE_THRESHOLD = Number(preset.fireThreshold) || 60;
-	var ARM_DELAY_MS = (Number(preset.armDelay) || 8) * 1000;
-	var DWELL_SECONDS = Number(preset.dwellSeconds) || 30;
-	var SCROLL_DEPTH = Number(preset.scrollDepth) || 0.5;
-	var UP_VELOCITY = Number(preset.upVelocity) || 1.2; // px per ms, upward.
-	var IDLE_SECONDS = Number(preset.idleSeconds) || 20;
+	var engine = cfg.engine || {};
+	var FIRE_THRESHOLD = Number(engine.fireThreshold) || 60;
+	// The one admin-facing gate: nothing may fire before this much visible
+	// time on the page. Afterwards, fast up-scroll and the back button fire
+	// instantly; softer signals still combine through the intent score.
+	var MIN_DWELL_SECONDS = (engine.minDwellSeconds === 0) ? 0 : (Number(engine.minDwellSeconds) || 20);
+	var SCROLL_DEPTH = Number(engine.scrollDepth) || 0.5;
+	var UP_VELOCITY = Number(engine.upVelocity) || 1.2; // px per ms, upward.
+	var IDLE_SECONDS = Number(engine.idleSeconds) || 20;
 
 	var SS_SHOWN = 'rescuecart_shown';
 	var SS_CLAIMED = 'rescuecart_claimed';
@@ -35,14 +37,12 @@
 	 * ---------------------------------------------------------------- */
 
 	var state = {
-		bootedAt: Date.now(),
 		score: 0,
 		fired: false,
 		claiming: false,
 		visibleSeconds: 0,
 		maxDepth: 0,
 		hiddenAt: 0,
-		sentinelArmed: false,
 		scrollSamples: [],
 		countdownTimer: null,
 		nonce: null,
@@ -100,8 +100,8 @@
 		return false;
 	}
 
-	function armDelayElapsed() {
-		return (Date.now() - state.bootedAt) >= ARM_DELAY_MS;
+	function dwellGateOpen() {
+		return state.visibleSeconds >= MIN_DWELL_SECONDS;
 	}
 
 	function addScore(points, signal) {
@@ -109,7 +109,7 @@
 			return;
 		}
 		state.score = Math.min(100, state.score + points);
-		if (state.score >= FIRE_THRESHOLD && armDelayElapsed()) {
+		if (state.score >= FIRE_THRESHOLD && dwellGateOpen()) {
 			fire(signal);
 		}
 	}
@@ -119,11 +119,17 @@
 	 * ---------------------------------------------------------------- */
 
 	// 1. Dwell (visible time only) + scroll depth — up to +35, one-shot.
+	// The same tracker opens the minimum-dwell gate; if softer signals
+	// already pushed the score over the threshold while the gate was
+	// closed, the popup fires the moment the gate opens.
 	function startDwellTracker() {
 		window.setInterval(function () {
 			if (document.visibilityState === 'visible') {
 				state.visibleSeconds += 1;
 				checkDwellSignal();
+				if (dwellGateOpen() && state.score >= FIRE_THRESHOLD) {
+					fire('dwell_gate');
+				}
 			}
 		}, 1000);
 	}
@@ -132,7 +138,7 @@
 		if (state.signalsDone.dwell) {
 			return;
 		}
-		if (state.visibleSeconds >= DWELL_SECONDS && state.maxDepth >= SCROLL_DEPTH) {
+		if (dwellGateOpen() && state.maxDepth >= SCROLL_DEPTH) {
 			state.signalsDone.dwell = true;
 			addScore(35, 'dwell_scroll');
 		}
@@ -168,37 +174,43 @@
 
 		if (upwardVelocity >= UP_VELOCITY && nearTop && !recentlyFired) {
 			state.signalsDone.upscrollAt = now;
-			addScore(30, 'fast_upscroll');
+			// Instant exit intent: fires directly once the dwell gate is open.
+			if (dwellGateOpen()) {
+				state.score = 100;
+				fire('fast_upscroll');
+			}
 		}
 	}
 
-	// 3. Back-button intercept: one-shot history sentinel. Armed once; the
-	// back press that triggers the popup consumes it, so the next back press
-	// genuinely leaves the page. Never re-armed — no back-button trap.
+	// 3. Back-button intercept: the final safety net. A sentinel entry is
+	// always pushed (other scripts' history.state must not disable it — the
+	// v1.0.0 bug). Any popstate that arrives while the popup has not been
+	// shown and the dwell gate is open re-pins the page once and fires,
+	// regardless of score or prior activity. Strictly one-shot: after the
+	// popup has been shown (or before the dwell gate opens), back presses
+	// navigate away normally — never a back-button trap.
 	function armHistorySentinel() {
 		if (suppressed()) {
 			return;
 		}
-		// Respect other code already managing history state.
-		if (window.history.state && window.history.state.rescuecart === undefined && Object.keys(window.history.state).length) {
-			return;
-		}
 		try {
 			window.history.pushState({ rescuecart: 1 }, '', window.location.href);
-			state.sentinelArmed = true;
 		} catch (e) {
-			state.sentinelArmed = false;
+			/* Sentinel push failed; the popstate listener still covers pops of foreign entries. */
 		}
 
 		window.addEventListener('popstate', function () {
-			if (!state.sentinelArmed) {
-				return;
+			if (suppressed() || !dwellGateOpen()) {
+				return; // Already shown/claimed or too early: let the user leave.
 			}
-			state.sentinelArmed = false; // Consumed: never re-armed.
-			if (!suppressed()) {
-				state.score = 100;
-				fire('back_button'); // Definitive signal: ignores arm delay.
+			// Keep the user on the page for this one interception.
+			try {
+				window.history.pushState({ rescuecart: 2 }, '', window.location.href);
+			} catch (e) {
+				/* If re-pinning fails the popup still shows while the page unwinds. */
 			}
+			state.score = 100;
+			fire('back_button'); // fire() marks shown, so this can never repeat.
 		});
 	}
 

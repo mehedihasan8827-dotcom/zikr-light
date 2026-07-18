@@ -112,6 +112,9 @@ final class RescueCart_Admin {
 		$this->add_field( 'popup_button', __( 'Claim button label', 'rescuecart' ), 'text', 'rescuecart_content' );
 		$this->add_field( 'popup_dismiss', __( 'Dismiss link label', 'rescuecart' ), 'text', 'rescuecart_content' );
 		$this->add_field( 'applied_message', __( 'Applied confirmation bar', 'rescuecart' ), 'text', 'rescuecart_content' );
+		$this->add_field( 'countdown_label', __( 'Countdown Label Text', 'rescuecart' ), 'text', 'rescuecart_content', array(
+			'help' => __( 'Shown next to the ticking timer inside the popup.', 'rescuecart' ),
+		) );
 
 		// --- Section: Triggers & targeting ------------------------------
 		add_settings_section(
@@ -123,13 +126,10 @@ final class RescueCart_Admin {
 			self::PAGE_SLUG
 		);
 
-		$this->add_field( 'sensitivity', __( 'Trigger sensitivity', 'rescuecart' ), 'select', 'rescuecart_triggers', array(
-			'options' => array(
-				'low'        => __( 'Low — fire only on very strong exit intent', 'rescuecart' ),
-				'balanced'   => __( 'Balanced (recommended)', 'rescuecart' ),
-				'aggressive' => __( 'Aggressive — fire early, maximize impressions', 'rescuecart' ),
-			),
-			'help'    => __( 'Controls the intent-score threshold and all signal thresholds (dwell, scroll depth, up-scroll velocity, idle).', 'rescuecart' ),
+		$this->add_field( 'min_dwell_seconds', __( 'Minimum Dwell Time (Seconds)', 'rescuecart' ), 'number', 'rescuecart_triggers', array(
+			'min'  => 0,
+			'step' => '1',
+			'help' => __( 'The popup can never trigger before the visitor has spent this many seconds on the page. After that, any exit intent (fast up-scroll or the back button) triggers it instantly. Default: 20.', 'rescuecart' ),
 		) );
 		$this->add_field( 'extra_page_ids', __( 'Additional page IDs', 'rescuecart' ), 'text', 'rescuecart_triggers', array(
 			'help' => __( 'Comma-separated page IDs to also run on (e.g. Elementor landing pages): 12, 34, 56', 'rescuecart' ),
@@ -274,16 +274,13 @@ final class RescueCart_Admin {
 
 		$clean['cooldown_hours'] = isset( $input['cooldown_hours'] ) ? absint( $input['cooldown_hours'] ) : $defaults['cooldown_hours'];
 
-		$sensitivities        = array( 'low', 'balanced', 'aggressive' );
-		$clean['sensitivity'] = ( isset( $input['sensitivity'] ) && in_array( $input['sensitivity'], $sensitivities, true ) )
-			? $input['sensitivity']
-			: $defaults['sensitivity'];
+		$clean['min_dwell_seconds'] = isset( $input['min_dwell_seconds'] ) ? absint( $input['min_dwell_seconds'] ) : $defaults['min_dwell_seconds'];
 
 		$page_ids                = isset( $input['extra_page_ids'] ) ? (string) $input['extra_page_ids'] : '';
 		$page_ids                = array_filter( array_map( 'absint', explode( ',', $page_ids ) ) );
 		$clean['extra_page_ids'] = implode( ',', $page_ids );
 
-		foreach ( array( 'popup_title', 'popup_button', 'popup_dismiss', 'applied_message' ) as $text_key ) {
+		foreach ( array( 'popup_title', 'popup_button', 'popup_dismiss', 'applied_message', 'countdown_label' ) as $text_key ) {
 			$text               = isset( $input[ $text_key ] ) ? sanitize_text_field( $input[ $text_key ] ) : '';
 			$clean[ $text_key ] = ( '' !== $text ) ? $text : $defaults[ $text_key ];
 		}
