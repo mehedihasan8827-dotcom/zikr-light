@@ -2,10 +2,11 @@
 
 ## Production-Grade System Design & Architectural Blueprint
 
-**Document version:** 1.0
+**Document version:** 2.0
 **Date:** 2026-07-18
 **Status:** Engineering specification — ready for implementation
-**Scope:** Financial control layer only. Order management, customer data, and courier dispatch remain in Nuport/WooCommerce/Steadfast.
+**Scope:** Financial control layer with **dual-pipeline ingestion (Nuport OMS API + Steadfast Courier API)**. Order management, customer data, and courier dispatch remain in Nuport/WooCommerce/Steadfast.
+**v2.0 changes:** Direct Steadfast API integration (delivery + payout pipeline, §2.3–2.4); three-stage courier fund tracking — Unsettled Courier Funds → Payment In Transit → Disbursed (§3, §4.1, §6); automated settlement posting with fee auto-expensing; cross-platform UI/UX blueprint for Desktop Web + Android (§17); AI code-generation roadmap (§18).
 
 ---
 
@@ -27,6 +28,8 @@
 14. [Failure Modes, Edge Cases & Recovery](#14-failure-modes-edge-cases--recovery)
 15. [Security, Audit & Compliance](#15-security-audit--compliance)
 16. [Implementation Roadmap](#16-implementation-roadmap)
+17. [Cross-Platform UI/UX Blueprint — Desktop Web + Android](#17-cross-platform-uiux-blueprint--desktop-web--android)
+18. [Step-by-Step Code Generation Roadmap (AI-Built)](#18-step-by-step-code-generation-roadmap-ai-built)
 
 ---
 
@@ -63,15 +66,16 @@ Pure Foodmart sells packaged food products (jaggery/gur, aamsotto, etc.) via Woo
 │                            EXTERNAL SYSTEMS                                 │
 │                                                                             │
 │  ┌──────────────┐      ┌──────────────────┐      ┌─────────────────┐        │
-│  │ WooCommerce  │─────▶│      NUPORT      │─────▶│    Steadfast    │        │
-│  │  (storefront)│      │ (OMS: orders,    │      │    (courier)    │        │
-│  └──────────────┘      │  customers,      │      └─────────────────┘        │
-│                        │  SKUs, statuses) │                                 │
-│                        └───────┬──────────┘                                 │
-│                                │  Company ID + API Key                      │
-│                    Webhooks    │    REST pulls (cron)                       │
-└────────────────────────────────┼────────────────────────────────────────────┘
-                                 ▼
+│  │ WooCommerce  │─────▶│      NUPORT      │─────▶│    STEADFAST    │        │
+│  │  (storefront)│      │ (OMS: orders,    │      │ (courier:       │        │
+│  └──────────────┘      │  customers,      │      │  delivery +     │        │
+│                        │  SKUs, statuses) │      │  COD payouts)   │        │
+│                        └───────┬──────────┘      └────────┬────────┘        │
+│                                │ Company ID + API Key     │ API Key +       │
+│                    Webhooks    │ REST pulls (cron)        │ Secret Key      │
+│                                │      status + payout polls / webhooks      │
+└────────────────────────────────┼──────────────────────────┼─────────────────┘
+                                 ▼                          ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                 PURE FOODMART FINANCIAL ERP (this system)                   │
 │                                                                             │
@@ -106,26 +110,52 @@ Pure Foodmart sells packaged food products (jaggery/gur, aamsotto, etc.) via Woo
 
 **Rate/retry policy.** Exponential backoff (2s/4s/8s/16s, max 5 tries) on 429/5xx; circuit breaker opens after 10 consecutive failures and alerts ops; cron job is resumable mid-pagination via stored page cursor.
 
-### 2.3 Order financial state machine
+### 2.3 Steadfast direct integration contract
 
-Nuport owns *operational* status; the ERP owns *financial* status. Financial postings key off financial-state transitions, which are derived from operational status but gated by idempotency:
+**Credentials.** `STEADFAST_API_KEY` and `STEADFAST_SECRET_KEY` live in the platform secret manager alongside the Nuport credentials, sent per Steadfast's header scheme (`Api-Key` / `Secret-Key`). The ERP is **read-only** toward Steadfast — parcel creation/dispatch stays in Nuport.
+
+**What the ERP consumes:**
+
+| Data | Endpoint class | Cadence | Drives |
+|------|----------------|---------|--------|
+| Delivery status per consignment | status-by-consignment / status-by-invoice / status-by-tracking | Hourly sweep over open orders; on-demand per order | Delivery confirmation & cross-verification; RTO detection |
+| Current merchant balance (funds Steadfast is holding) | balance endpoint | Hourly | Invariant I2 cross-check: `1110 + 1115` vs Steadfast-held funds |
+| Payout invoices/batches + their payment status | payout/invoice endpoints — **confirm availability in Phase 0** | Hourly | Auto-posting of JE-C1 (batch → "Pending Payment") and JE-C2 (disbursement → "Settled") |
+| Delivery/tracking webhooks (if enabled on the merchant account) | webhook push | Real-time | Faster status transitions; feeds the same processing path as polls |
+
+**Phase 0 caveat (explicit).** Steadfast's public merchant API reliably exposes order status and merchant balance. Whether **payout-invoice detail** (which consignments are in which payout batch, batch payment status) is exposed over API varies by account tier and must be confirmed during discovery. If it is not available, stage-2/3 automation runs off the CSV/statement fallback (§6.3) while stage-1 tracking and the hourly balance cross-check remain fully automatic. **The internal architecture is identical either way — only the feed changes.**
+
+**Ingestion pattern:** identical to Nuport — raw payloads into `steadfast_events` (append-only, hash-deduped), queue jobs, idempotent processors. One pipeline pattern, three feeds: Nuport webhook, Nuport cron, Steadfast poll/webhook.
+
+### 2.4 Dual-pipeline authority model (who wins on conflict)
+
+| Fact | Authoritative source | Cross-checked against |
+|------|---------------------|----------------------|
+| Order contents, amounts, SKUs, payment mode, customer | **Nuport** | — |
+| Physical delivery / return status | **Steadfast** | Nuport status |
+| Cash held by courier, payout batching, disbursement | **Steadfast** | Bank/bKash statement + ledger 1110/1115 |
+
+Revenue posts on the **first confirmed `delivered` from either pipeline** (idempotency gates make double-posting impossible). If the two pipelines disagree for more than 24 hours (e.g., Nuport says delivered, Steadfast says returned), the order freezes in `EXCEPTION` and surfaces in the exception center — the system never guesses about money.
+
+### 2.5 Order financial state machine
+
+Nuport/Steadfast own *operational* status; the ERP owns *financial* status. Fund-stage transitions after revenue are driven exclusively by the Steadfast payments pipeline (or CSV fallback):
 
 ```
-                    ┌──────────────────────────────────────────────┐
-                    ▼                                              │
- (new order seen) SYNCED ──delivered──▶ REVENUE_POSTED ──settled──▶ SETTLED
-                    │                        │
-                    │ cancelled/RTO          │ returned-after-delivery
-                    ▼                        ▼
-                 CLOSED_NO_REVENUE      RETURN_POSTED ──refund/settle──▶ SETTLED
+ (order seen) SYNCED ──delivered──▶ REVENUE_POSTED ──invoiced──▶ PAYMENT_PENDING ──disbursed──▶ SETTLED
+                 │                       │                            (Steadfast payout pipeline)
+                 │ cancelled/RTO         │ returned-after-delivery
+                 ▼                       ▼
+          CLOSED_NO_REVENUE         RETURN_POSTED ──refund/settle──▶ SETTLED
 ```
 
 Rules:
 
-- Revenue + COGS post **exactly once**, on the first observation of `delivered` (webhook or cron, whichever arrives first).
+- Revenue + COGS post **exactly once**, on the first observation of `delivered` (Nuport webhook, Nuport cron, or Steadfast poll — whichever arrives first).
 - A later duplicate `delivered` event is a no-op (state already `REVENUE_POSTED`).
+- `REVENUE_POSTED → PAYMENT_PENDING` fires when the order's consignment appears in a Steadfast payout invoice; `PAYMENT_PENDING → SETTLED` fires when that invoice is confirmed paid (§6.2).
 - `partially_delivered` posts revenue/COGS only for the delivered lines (Nuport line-level delivered quantities; if Nuport reports only order-level partials, treat as full-deliver + subsequent return adjustment — decide during API discovery).
-- A status *regression* reported by Nuport (delivered → returned) triggers reversing entries, never edits.
+- A status *regression* (delivered → returned) triggers reversing entries, never edits.
 
 ---
 
@@ -141,8 +171,9 @@ Numbering follows a conventional 4-digit scheme. `normal_balance` determines sig
 | 1020 | Bank — [Bank Name] Current A/C | One account per real bank account |
 | 1030 | bKash Merchant Wallet | Mobile-money balance |
 | 1040 | Nagad Wallet | If used |
-| 1110 | Courier Receivable — Steadfast | COD collected by courier, not yet remitted |
-| 1120 | Courier Receivable — [Other courier] | One account per courier |
+| 1110 | Unsettled Courier Funds — Steadfast | Delivered, cash held by courier, not yet invoiced ("Waiting Approval") |
+| 1115 | Courier Payment In Transit — Steadfast | Batched into a Steadfast payout invoice, awaiting disbursement ("Pending Payment") |
+| 1120 | Courier Receivable — [Other courier] | One 1110/1115 pair per additional courier |
 | 1210 | Accounts Receivable — Other | Wholesale/credit customers, if any |
 | 1310 | Inventory — Raw Materials | Bulk jaggery, aamsotto pulp, etc. |
 | 1320 | Inventory — Packaging Materials | 2KG/3KG/5KG cartons, labels, tape |
@@ -213,11 +244,11 @@ Every event below produces one atomic `journal_entry` with ≥2 `journal_lines`.
 
 **E1. Order synced but not delivered** → *no journal entry.* (No financial event has occurred. The order sits in `sales_orders` at state `SYNCED`. Optional: goods-in-transit posting if pre-shipping deduction is enabled, §5.6.)
 
-**E2. Nuport reports `delivered` (revenue recognition point):**
+**E2. Delivery confirmed — first `delivered` observation from either pipeline (revenue recognition point):**
 
 ```
-JE-A  Revenue recognition (source: nuport_event #...)
-  Dr 1110 Courier Receivable — Steadfast     1,150.00
+JE-A  Revenue recognition (source: nuport_event / steadfast_event #...)
+  Dr 1110 Unsettled Courier Funds — Steadfast 1,150.00
       Cr 4010 Sales Revenue — Products                  1,050.00
       Cr 4020 Delivery Charge Income                      100.00
 
@@ -230,23 +261,31 @@ JE-B  COGS via BOM deduction (same DB transaction as JE-A)
 
 > JE-A and JE-B are posted inside **one DB transaction** together with the inventory movement rows, so revenue, COGS, and stock can never diverge.
 
-**E3. Steadfast settles (weekly payout, deducts its fee).** Gross COD collected across the period ৳46,000; courier charges ৳3,120; net bank credit ৳42,880:
+**E3a. Steadfast batches the orders into a payout invoice ("Pending Payment").** Detected automatically from the Steadfast payments pipeline; moves the funds between the two courier asset stages:
 
 ```
-JE-C  Courier settlement #ST-2026-07-W2
-  Dr 1020 Bank                              42,880.00
-  Dr 6010 Courier & Delivery Charges         3,120.00
-      Cr 1110 Courier Receivable — Steadfast           46,000.00
+JE-C1  Payout batch #INV-88231 recognized (auto-posted)
+  Dr 1115 Courier Payment In Transit — Steadfast   46,000.00
+      Cr 1110 Unsettled Courier Funds — Steadfast              46,000.00
 ```
 
-The settlement is **matched order-by-order** (§6): the ৳46,000 must equal the sum of COD amounts of the specific orders listed on the Steadfast statement, and each matched order's financial state advances to `SETTLED`.
+**E3b. Steadfast disburses ("Disbursed/Settled").** Gross COD ৳46,000; courier delivery fees ৳3,120 are **auto-logged to the daily operational expense ledger (6010)**; net ৳42,880 hits the payout channel (bank or bKash):
+
+```
+JE-C2  Disbursement of #INV-88231 (auto-posted on payment confirmation)
+  Dr 1020 Bank  (or 1030 bKash, per payout channel) 42,880.00
+  Dr 6010 Courier & Delivery Charges                 3,120.00
+      Cr 1115 Courier Payment In Transit — Steadfast           46,000.00
+```
+
+Both entries are auto-posted by the Steadfast settlement pipeline and **matched order-by-order** (§6): the ৳46,000 must equal the sum of COD amounts of the exact consignments in the payout invoice, and each matched order's financial state advances `REVENUE_POSTED → PAYMENT_PENDING → SETTLED`. No manual calculation anywhere in this path.
 
 **E4. RTO — returned before delivery (courier failed to deliver).** No revenue was ever posted (state was `SYNCED`). Costs: courier return charge ৳70, payable/offset against future settlement:
 
 ```
 JE-D  RTO charge, order NP-10250
   Dr 6010 Courier & Delivery Charges            70.00
-      Cr 1110 Courier Receivable — Steadfast                70.00
+      Cr 1110 Unsettled Courier Funds — Steadfast           70.00
       (Steadfast nets return charges out of the next payout)
 ```
 
@@ -258,7 +297,7 @@ If goods return to warehouse sellable → restock movement (no value change if F
 JE-E  Post-delivery return, order NP-10234
   Dr 4110 Sales Returns & Allowances         1,050.00
   Dr 4020 Delivery Charge Income               100.00      (or leave if fee non-refundable)
-      Cr 1110 Courier Receivable — Steadfast             1,150.00   (if before settlement)
+      Cr 1110 or 1115 (per the order's current fund stage) 1,150.00  (if before settlement)
       — or —  Cr 1030 bKash Wallet                       1,150.00   (if refunded after settlement)
 
 JE-F  Restock (goods sellable)
@@ -375,8 +414,9 @@ Disposal — sold after 18 months for ৳65,000 cash; book value = 85,000 − 22
 | `SALE_DELIVERED_PREPAID` | Nuport `delivered`, prepaid | 2110 | 4010, 4020 |
 | `PREPAYMENT_RECEIVED` | Payment event | 1030/1020, 6030 | 2110 |
 | `COGS_BOM` | With any revenue posting | 5010, 5020 | 1310, 1320 |
-| `COURIER_SETTLEMENT` | Manual/CSV settlement match | 1020, 6010 | 1110 |
-| `RTO_CHARGE` | Nuport `returned` (pre-delivery) | 6010 | 1110 |
+| `COURIER_BATCHED` | Steadfast payout invoice detected | 1115 | 1110 |
+| `COURIER_SETTLEMENT` | Steadfast payout confirmed paid (API; CSV fallback) | 1020/1030, 6010 | 1115 |
+| `RTO_CHARGE` | Courier `returned` (pre-delivery) | 6010 | 1110 |
 | `POST_DELIVERY_RETURN` | Nuport return event | 4110 (+4020) | 1110/1030/1010 |
 | `RETURN_RESTOCK` | Return marked sellable | 1310, 1320 | 5010, 5020 |
 | `PURCHASE_RAW` | Purchase portal | 1310 | 1010/1020/2010 |
@@ -482,16 +522,35 @@ Monthly physical count portal: enter counted qty per item → system computes va
 
 ## 6. Courier Receivables & Settlement Reconciliation
 
-This is where e-commerce businesses leak money. Design:
+This is where e-commerce businesses leak money. In v2 the **Steadfast payments API is the primary settlement pipeline**; the CSV/statement upload portal is retained as a fallback. No manual calculation exists anywhere in this flow.
 
-1. **Per-order receivable tracking.** Account 1110's balance always equals `Σ cod_amount` of orders in state `REVENUE_POSTED` (delivered, unsettled) minus pending RTO charge offsets. The dashboard shows this both as a ledger balance and as a drill-down list of the exact unsettled orders — the two views come from the same rows and must always match.
-2. **Settlement ingestion.** Steadfast payout statements (CSV/portal export, or Steadfast API if enabled) are uploaded to the Settlement portal. Each statement row = (consignment/invoice ID, order ref, COD collected, courier charge, net).
-3. **Auto-matching.** Rows match to `sales_orders` by Nuport order ref / consignment ID. Match outcomes:
-   - **Matched exact** → order → `SETTLED`; contributes to JE-C amounts.
-   - **Amount mismatch** (courier collected ≠ our COD amount) → exception queue; must be resolved (partial collection, courier discount, data error) before the settlement posts.
-   - **Unknown order** in statement, or **order we expected missing** from statement → exception queue.
-4. **One JE-C per settlement batch**, whose receivable credit equals the sum of matched orders exactly. The settlement cannot be posted while unresolved exceptions exist. `Dr Bank` must equal the actual bank credit (user confirms against bank statement) — any residual difference must be explicitly classified (courier charge, adjustment) before posting is allowed. **The system refuses to post unbalanced or unexplained settlements.**
-5. **Aging report.** Courier receivable aging (0–7, 8–14, 15–30, >30 days since delivery). >14 days unsettled = alert. This surfaces "money stuck with couriers" automatically.
+### 6.1 Three-stage courier fund tracking
+
+| Stage | Steadfast state | Ledger account | Order `fin_state` |
+|-------|-----------------|----------------|-------------------|
+| 1. Waiting Approval | Delivered, cash with courier, not yet invoiced | **1110 Unsettled Courier Funds** | `REVENUE_POSTED` |
+| 2. Pending Payment | Batched into a payout invoice awaiting transfer | **1115 Courier Payment In Transit** | `PAYMENT_PENDING` |
+| 3. Disbursed / Settled | Payout paid to bank/bKash | **1020 / 1030** (fees → **6010**) | `SETTLED` |
+
+At all times: `balance(1110) = Σ cod_amount of stage-1 orders − pending RTO offsets` and `balance(1115) = Σ cod_amount of stage-2 orders`. The dashboard shows each stage both as a ledger balance and as a drill-down list of the exact orders behind it — same rows, must always match (invariant I2), and the sum `1110 + 1115` is cross-checked hourly against the Steadfast balance endpoint.
+
+### 6.2 Automated settlement pipeline (primary)
+
+1. **Hourly Steadfast poll** (worker job): consignment statuses for all open orders, payout invoices and their payment status, current merchant balance. Raw responses land in `steadfast_events` (append-only, hash-deduped) and enqueue processing jobs.
+2. **New payout invoice detected** → match its consignments to `sales_orders` by consignment ID → auto-post **JE-C1** (`Dr 1115 / Cr 1110`) for the matched total → matched orders → `PAYMENT_PENDING`, invoice stored in `courier_settlements` (status `BATCHED`).
+3. **Invoice confirmed paid** → verify the math (`gross − fees = net`) and that net equals the actual bank/bKash credit — a one-tap confirmation against the bank SMS/statement in the app (auto-confirmed later if a bank feed is integrated) → auto-post **JE-C2** (`Dr Bank/bKash + Dr 6010 fees / Cr 1115`) → orders → `SETTLED`. Courier delivery fees are thereby auto-logged into daily operational expenses with zero manual entry.
+4. **Match outcomes:** exact match / **amount mismatch** (courier collected ≠ our COD) / **unknown consignment** in invoice / **expected order missing** → the last three go to the exception queue. An invoice with unresolved exceptions **cannot post** — the system refuses unbalanced or unexplained settlements.
+
+### 6.3 CSV/statement fallback
+
+The same matching + posting engine fed by an uploaded Steadfast statement export instead of the API — used if payout detail is not exposed on our API tier (Phase 0 determines this), during API outages, or for pre-integration history. One JE-C1 + JE-C2 pair per statement.
+
+### 6.4 Aging & alerts
+
+- Aging on both stages (0–7 / 8–14 / 15–30 / >30 days).
+- Stage-1 order older than 14 days without invoicing → alert.
+- Stage-2 invoice unpaid for more than 7 days → alert.
+- Drift between ledger `1110 + 1115` and the Steadfast-reported balance → integrity alert (blocks period close until explained).
 
 ---
 
@@ -529,7 +588,7 @@ CREATE TYPE normal_side       AS ENUM ('DEBIT','CREDIT');
 CREATE TYPE item_kind         AS ENUM ('RAW','PACKAGING','FINISHED');
 CREATE TYPE movement_type     AS ENUM ('PURCHASE','SALE_BOM','RETURN_RESTOCK','ADJUSTMENT',
                                        'DRAWING_KIND','SHIP_OUT','TRANSIT_TO_COGS','TRANSIT_RESTOCK');
-CREATE TYPE order_fin_state   AS ENUM ('SYNCED','REVENUE_POSTED','RETURN_POSTED',
+CREATE TYPE order_fin_state   AS ENUM ('SYNCED','REVENUE_POSTED','PAYMENT_PENDING','RETURN_POSTED',
                                        'CLOSED_NO_REVENUE','SETTLED','NEEDS_BOM','EXCEPTION');
 CREATE TYPE payment_mode      AS ENUM ('COD','BKASH','NAGAD','BANK','CARD','OTHER');
 CREATE TYPE source_type       AS ENUM ('NUPORT_ORDER','SETTLEMENT','PURCHASE','EXPENSE',
@@ -762,6 +821,8 @@ CREATE TABLE sales_orders (
   nuport_order_ref VARCHAR(64) NOT NULL UNIQUE,
   woo_order_ref    VARCHAR(64),
   consignment_id   VARCHAR(64),                 -- Steadfast tracking/consignment
+  steadfast_status VARCHAR(32),                 -- latest raw status from Steadfast API
+  steadfast_invoice_ref VARCHAR(64),            -- payout invoice this order was batched into
   courier          VARCHAR(32) NOT NULL DEFAULT 'STEADFAST',
   payment_mode     payment_mode NOT NULL,
   product_amount   NUMERIC(14,2) NOT NULL CHECK (product_amount >= 0),
@@ -807,8 +868,10 @@ CREATE TABLE courier_settlements (
   courier_charges NUMERIC(14,2) NOT NULL,
   net_paid      NUMERIC(14,2) NOT NULL,
   bank_account_id INT NOT NULL REFERENCES accounts(id),
-  status        VARCHAR(16) NOT NULL DEFAULT 'DRAFT',  -- DRAFT/MATCHED/POSTED
-  posted_entry_id BIGINT REFERENCES journal_entries(id),
+  source_channel VARCHAR(8) NOT NULL DEFAULT 'API',    -- API (Steadfast payments) | CSV fallback
+  status        VARCHAR(16) NOT NULL DEFAULT 'DRAFT',  -- DRAFT/MATCHED/BATCHED/POSTED
+  batch_entry_id  BIGINT REFERENCES journal_entries(id),  -- JE-C1 (Dr 1115 / Cr 1110)
+  posted_entry_id BIGINT REFERENCES journal_entries(id),  -- JE-C2 (Dr bank+fees / Cr 1115)
   uploaded_by   INT,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (courier, statement_ref),
@@ -830,6 +893,23 @@ CREATE TABLE settlement_lines (
 -- an order can appear in at most one posted settlement:
 CREATE UNIQUE INDEX uq_settled_once ON settlement_lines(order_id)
   WHERE order_id IS NOT NULL AND match_status IN ('MATCHED','RESOLVED');
+
+CREATE TABLE steadfast_events (        -- raw Steadfast API ingestion log (mirror of nuport_events)
+  id             BIGSERIAL PRIMARY KEY,
+  channel        sync_channel NOT NULL,          -- CRON poll or WEBHOOK (if enabled)
+  event_kind     VARCHAR(32) NOT NULL,           -- STATUS_CHANGE | BALANCE_SNAPSHOT |
+                                                 -- INVOICE_CREATED | PAYOUT_DISBURSED
+  consignment_id VARCHAR(64),
+  invoice_ref    VARCHAR(64),
+  payload        JSONB NOT NULL,
+  payload_hash   CHAR(64) NOT NULL,
+  status         event_status NOT NULL DEFAULT 'RECEIVED',
+  received_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  processed_at   TIMESTAMPTZ,
+  error          TEXT,
+  UNIQUE (event_kind, consignment_id, invoice_ref, payload_hash)  -- same state twice = duplicate
+);
+CREATE INDEX idx_sf_consignment ON steadfast_events(consignment_id);
 
 -- ============================================================
 -- 5. PURCHASES & EXPENSES
@@ -998,7 +1078,7 @@ The "not a single Taka unaccounted" requirement decomposes into six enforced inv
 | # | Invariant | Check | Frequency |
 |---|-----------|-------|-----------|
 | I1 | Trial balance: Σ all debits = Σ all credits | SQL assertion | Continuous (per-entry trigger) + nightly full scan |
-| I2 | `1110 Courier Receivable` = Σ `cod_amount` of orders in `REVENUE_POSTED` − pending RTO offsets | Reconciliation query | Nightly + on-dashboard |
+| I2 | `1110` = Σ `cod_amount` of `REVENUE_POSTED` orders − pending RTO offsets; `1115` = Σ `cod_amount` of `PAYMENT_PENDING` orders; `1110 + 1115` ≈ Steadfast-reported merchant balance | Reconciliation query + Steadfast balance endpoint | Hourly + on-dashboard |
 | I3 | `1310+1320` ledger balances = Σ `inventory_movements.value` = Σ(`item_stock.on_hand × avg_cost`) ± rounding reserve | Three-way match | Nightly |
 | I4 | `2110 Customer Advances` = Σ prepaid undelivered order amounts | Reconciliation query | Nightly |
 | I5 | Every `sales_orders.revenue_entry_id` maps to exactly one Nuport order; Nuport delivered-order totals (cron pull) = Σ revenue posted per day | Cross-system diff report | Daily cron |
@@ -1038,14 +1118,16 @@ Month close requires, in order: (1) all `nuport_events` processed or resolved; (
 apps/
   api/            HTTP: auth, portals (expenses, purchases, equity, assets,
                   settlements, stock counts), reporting queries, webhook receiver
-  worker/         Queue consumers: nuport-event processor, cron pullers,
+  worker/         Queue consumers: nuport-event processor, steadfast pollers
+                  (status/invoice/balance), settlement auto-poster, cron pullers,
                   depreciation job, integrity verifier, hash-chain verifier
 packages/
   ledger/         THE ONLY module allowed to write journal_entries/lines.
                   Exposes post(eventCode, sourceRef, lines[]) — validates against
                   posting_rules, wraps in transaction, maintains hash chain.
   inventory/      BOM explosion, MWA costing, movement writer (calls ledger)
-  nuport-client/  Typed API client, auth, pagination, backoff
+  nuport-client/  Typed Nuport API client, auth, pagination, backoff
+  steadfast-client/ Typed Steadfast API client (statuses, payout invoices, balance)
   domain/         Shared types, money arithmetic (integer-poisha internally)
 ```
 
@@ -1108,13 +1190,18 @@ A modular monolith with one database gives **cross-module ACID transactions** (r
 [6] REAL-TIME DASHBOARD REFRESH
         • account_balances materialized view refresh (incremental)
         • WebSocket/SSE push to connected dashboards
-        • Cash panel: 1010 + 1020 + 1030 | Courier dues: 1110 drill-down
+        • Cash panel: 1010 + 1020 + 1030 | Courier funds: 1110 + 1115 drill-down
         • P&L today: 4010−4110−(5010+5020)−6xxx  → live net profit
 ```
 
 ### 12.2 Completeness loop (cron)
 
 ```
+Hourly (Steadfast pipeline):
+  poll consignment statuses (open orders) ──▶ status changes → same order pipeline as §12.1
+  poll payout invoices + payment status  ──▶ settlement pipeline (§6.2, JE-C1/JE-C2)
+  poll merchant balance ──▶ compare vs ledger 1110+1115 ──▶ drift → integrity alert
+  Nuport light pull (updated_since cursor)
 02:30 Dhaka daily:
   pull all orders updated_since cursor ──▶ fingerprint diff ──▶ enqueue changed
   pull SKU master ──▶ new SKUs → "unmapped SKU" exception queue
@@ -1124,14 +1211,17 @@ A modular monolith with one database gives **cross-module ACID transactions** (r
 03:30 daily:       integrity verifier (I1–I5) + hash-chain walk + item_stock replay check
 ```
 
-### 12.3 Settlement flow
+### 12.3 Settlement flow (automated, Steadfast payments pipeline)
 
 ```
-Steadfast statement CSV ─▶ Settlement portal upload ─▶ parse rows
-  ─▶ auto-match by consignment/order ref ─▶ exceptions queue (human resolves)
-  ─▶ all matched ─▶ preview JE-C (Dr Bank + Dr Courier charges / Cr 1110)
-  ─▶ user confirms bank credit amount matches bank statement ─▶ POST (one txn)
-  ─▶ matched orders → SETTLED ─▶ receivable aging updates
+Hourly Steadfast poll ─▶ new payout invoice detected (steadfast_events)
+  ─▶ auto-match consignments → sales_orders ─▶ exceptions queue (human resolves any)
+  ─▶ all matched ─▶ auto-post JE-C1 (Dr 1115 / Cr 1110) ─▶ orders → PAYMENT_PENDING
+Invoice status = paid ─▶ verify gross − fees = net
+  ─▶ one-tap confirm net vs bank/bKash credit
+  ─▶ auto-post JE-C2 (Dr Bank/bKash + Dr 6010 fees / Cr 1115) ─▶ orders → SETTLED
+  ─▶ fund-stage dashboard + aging refresh
+Fallback: Steadfast statement CSV upload feeds the identical matching/posting engine (§6.3)
 ```
 
 ---
@@ -1140,7 +1230,7 @@ Steadfast statement CSV ─▶ Settlement portal upload ─▶ parse rows
 
 **Home (real-time, WebSocket-fed):**
 
-- **Cash position strip:** Cash in Hand | Bank | bKash | *Courier Dues (1110)* | Total liquid — each card click-through to ledger detail.
+- **Cash position strip:** Cash in Hand | Bank | bKash | *Courier Funds — Waiting Approval (1110)* | *Courier Funds — Pending Payment (1115)* | Total liquid — each card click-through to ledger detail.
 - **Today/This week:** orders delivered, revenue, COGS, gross margin %, ad spend, net operating profit.
 - **Courier receivable aging** bar (0–7/8–14/15–30/>30 days) with amount stuck per bucket.
 - **Inventory health:** on-hand qty & value per raw/packaging item, days-of-cover (based on trailing 14-day BOM consumption), low-stock alerts.
@@ -1169,7 +1259,9 @@ Steadfast statement CSV ─▶ Settlement portal upload ─▶ parse rows
 | 14.7 | **Partial delivery** | Line-level delivered quantities from Nuport drive partial revenue+COGS; remainder follows RTO path. If Nuport lacks line-level data: full posting + return adjustment (documented, consistent). |
 | 14.8 | **Purchase price entry error discovered later** | Reversal of purchase JE + corrected repost; MWA recalculated by replaying movements from the correction point (rebuild job); affected COGS deltas posted as adjustment entry with full report. |
 | 14.9 | **Combo/multi-line orders** | Handled natively by BOM explosion merge (§5.4 step 2). |
-| 14.10 | **DB restore after disaster** | PITR to minute granularity; after restore, cron re-pull with cursor rewound 7 days re-converges Nuport state; hash chain verifies untouched history. |
+| 14.10 | **DB restore after disaster** | PITR to minute granularity; after restore, cron re-pull with cursor rewound 7 days re-converges Nuport + Steadfast state; hash chain verifies untouched history. |
+| 14.11 | **Pipeline disagreement** (Nuport says delivered, Steadfast says returned/pending) | Steadfast is authoritative for delivery (§2.4). If already `REVENUE_POSTED` on Nuport's signal, hold fund-stage transitions; disagreement > 24 h → order → `EXCEPTION`, no further posting until resolved. |
+| 14.12 | **Steadfast balance drift** (ledger 1110+1115 ≠ API-reported balance) | Integrity alert with per-order diff report (orders we think are unsettled vs Steadfast's view); usually a missed RTO charge or an invoice we haven't ingested; blocks month-close until explained. |
 
 ---
 
@@ -1189,16 +1281,144 @@ Steadfast statement CSV ─▶ Settlement portal upload ─▶ parse rows
 
 | Phase | Weeks | Deliverable | Exit criterion |
 |-------|-------|-------------|----------------|
-| 0 | 1 | Nuport API discovery: real payload shapes, event names, line-level delivery granularity, webhook signing | Contract doc + recorded sample payloads for tests |
+| 0 | 1 | API discovery — **Nuport** (payload shapes, event names, line-level delivery granularity, webhook signing) and **Steadfast** (status endpoints, webhook availability, whether payout-invoice detail is exposed via API on our tier) | Contract doc + recorded sample payloads for tests |
 | 1 | 2–3 | Ledger core: accounts, journal engine, integrity triggers, hash chain, manual journal + trial balance | Post/verify entries; triggers reject unbalanced/mutation |
 | 2 | 2 | Items, BOM versioning, purchases portal, MWA engine, stock counts | Purchase→stock→valuation matches ledger (I3 green) |
 | 3 | 2–3 | Nuport ingestion (webhook+cron), order state machine, revenue+COGS pipeline, exception center | Replay 3 months of historical orders; I5 diff = 0 |
-| 4 | 1–2 | Settlement portal + matching, receivable aging | One real Steadfast statement fully matched & posted |
+| 4 | 1–2 | Steadfast payments pipeline: status/invoice/balance pollers, auto JE-C1/JE-C2 posting, CSV fallback portal, fund-stage aging | One real Steadfast payout cycle auto-posted end-to-end (or via CSV fallback if API tier lacks payout detail) |
 | 5 | 1 | Expenses, equity, fixed assets + depreciation cron | Month-end close dry run passes checklist |
 | 6 | 1–2 | Dashboards, statements, alerts, RBAC hardening, backup drill | Parallel run vs current bookkeeping for one full month; discrepancies = 0 or explained |
 | GO | — | Cut over at a month boundary with opening balances posted as a `CLOSING`-type opening entry | Owner sign-off |
 
 **Opening balances:** one-time wizard — count cash/bank/bKash, physical stock count (qty × known cost), courier dues from Steadfast portal, fixed assets at net book value, plug to partner capital per agreed split. Posted as the genesis journal entry (hash chain root).
+
+---
+
+## 17. Cross-Platform UI/UX Blueprint — Desktop Web + Android
+
+### 17.1 Platform strategy: one codebase, two form factors
+
+**Decision: a single TypeScript/React codebase delivers both versions.**
+
+| Target | Delivery mechanism | Distribution |
+|--------|--------------------|--------------|
+| Desktop Web/App | Responsive web app, installable **PWA** (works as a desktop app window on Windows/Mac via Chrome/Edge "Install app") | `https://erp.purefoodmart.com` |
+| Android Mobile | The **same app wrapped with Capacitor** → real Android APK/AAB with native shell (biometric unlock, push notifications, camera, offline storage) | Direct APK install for the team, or Google Play (internal track) |
+
+**Why not a separate native Android app:** the ERP's value is *financial correctness*. Two frontend codebases means two implementations of money formatting, validation, and state handling — double the surface for a Taka to be displayed wrong. One React codebase with responsive layouts + Capacitor gives a genuinely native-feeling Android app with **zero divergence** in financial logic. All money math lives in the backend anyway; the frontend never computes balances.
+
+### 17.2 Design system ("Pure Ledger" theme)
+
+- **Palette:** deep forest green primary (trust/brand), jaggery-amber accent for revenue highlights, warm neutral surfaces; strict semantic colors — green = money in, red = money out, amber = stuck/pending (courier funds), purple = equity. Full dark mode (default follows system).
+- **Typography:** Inter for Latin/numerals, **Noto Sans Bengali** for Bangla UI strings and item names. Tabular (monospaced) numerals in every money column.
+- **Money display:** `৳` prefix, poisha always shown in ledgers (`৳1,150.00`), optional **lakh/crore digit grouping** (`৳12,34,567.89`) as a user setting. Negative = red with parentheses. One shared `<Money>` component — the only code allowed to format currency.
+- **Core component inventory:** `StatCard` (dashboard KPIs w/ sparkline), `LedgerTable` (virtualized, column-pinned Dr/Cr), `MoneyInput` (poisha-safe, Bangla keyboard friendly), `StatusChip` (fin_state color-coded), `FundStageBar` (1110 → 1115 → bank visual pipeline), `ExceptionBanner`, `BottomSheetForm` (mobile), `ConfirmSlider` (irreversible postings require slide-to-confirm on mobile, typed confirmation on desktop).
+- **Density rule:** desktop = data-dense tables (accountant mode); mobile = card lists, one entity per card, drill-in navigation.
+
+### 17.3 Navigation architecture
+
+**Desktop (≥1024 px):** persistent left sidebar — Dashboard · Sales & Orders · Courier Funds · Inventory & BOM · Purchases · Expenses · Partners · Fixed Assets · Reports · Exceptions (badge) · Settings. Top bar: period selector, global search (order ref/consignment ID), sync-health indicator (green/amber/red for Nuport + Steadfast feeds), user menu.
+
+**Android / mobile (<768 px):** bottom tab bar with 5 slots — **Home · Cash · [+] · Stock · More**. The center **[+]** is a floating action: Add Expense (default, ≤3 taps), Add Purchase, Add Drawing. "More" holds Partners, Assets, Reports, Exceptions, Settings. Sync-health dot on the Home tab icon.
+
+### 17.4 Screen inventory (both form factors unless noted)
+
+| # | Screen | Purpose / key elements |
+|---|--------|------------------------|
+| S1 | Dashboard Home | Cash strip (Cash/Bank/bKash/1110/1115/Total), today & week revenue/COGS/net profit, fund-stage pipeline bar, exception badges |
+| S2 | Sales & Orders list | Synced orders w/ fin_state chips; filters by state/date/payment mode; search by order ref |
+| S3 | Order detail | Lines, BOM explosion + per-order COGS, margin, linked journal entries, Steadfast status timeline |
+| S4 | Courier Funds | Three-stage board (Waiting Approval / Pending Payment / Disbursed), aging bars, Steadfast balance vs ledger check, invoice list |
+| S5 | Settlement detail | Invoice consignment matching table, exception resolution, one-tap disbursement confirm |
+| S6 | Inventory overview | On-hand qty & value per item, days-of-cover, low-stock alerts |
+| S7 | Item detail | Movement history, avg-cost trend chart |
+| S8 | BOM manager | Recipe editor with version history; per-SKU current unit cost preview |
+| S9 | Stock count | Guided count flow (mobile-first: walk the store, enter counts), variance preview before posting |
+| S10 | Purchases | List + entry form (supplier, lines, paid-from account); receipt photo capture (mobile camera) |
+| S11 | Expenses | Quick-entry form (category, amount, paid-from, note, receipt photo); recent list; category month totals |
+| S12 | Partners | Per-partner capital/drawings/profit-share statement; drawing & injection entry |
+| S13 | Fixed Assets | Register, depreciation schedule chart, disposal flow with auto gain/loss preview |
+| S14 | Reports hub | P&L, Balance Sheet, Cash Flow, Trial Balance, GL drill-down, journal browser — all date-ranged, export PDF/XLSX |
+| S15 | Exceptions center | Unified queue (unmapped SKU, NEEDS_BOM, settlement mismatch, negative stock, pipeline disagreement, balance drift) with guided resolution wizards |
+| S16 | Period close | Checklist UI (§10.4) — each gate green/red with drill-in; lock button (OWNER + 2FA re-prompt) |
+| S17 | Settings | Users/roles/2FA, API credentials health (never shows secrets), account mappings, BOM defaults, backup status |
+| S18 | Login / 2FA | Email+password, TOTP; biometric unlock on Android (Capacitor) after first login |
+
+### 17.5 Mobile-specific UX commitments
+
+- **≤3 taps to log an expense:** [+] → category chip → amount → save (paid-from defaults to last used).
+- **Camera receipt capture** attaches to expenses/purchases → S3-compatible storage.
+- **Offline behavior:** dashboards render from last-synced cache with a visible "as of" stamp; expense entries queue locally and sync when back online (idempotency keys prevent double-posting). No financial posting is ever computed client-side.
+- **Push notifications** (Android): payout disbursed, integrity alert, low stock, exception opened.
+- **Biometric app lock** on every foreground resume.
+
+### 17.6 Accessibility & language
+
+WCAG AA contrast in both themes; full English/বাংলা UI toggle (all strings in i18n catalogs from day one); numerals stay Western-Arabic in ledgers for auditability, Bangla labels everywhere else per user preference.
+
+---
+
+## 18. Step-by-Step Code Generation Roadmap (AI-Built)
+
+### 18.1 Operating model — how you and I build this together
+
+- **I generate 100% of the code.** You never write code. Better than copy-paste: I work directly in your GitHub repository — I write the files, commit, and push; you pull/deploy. (Copy-paste remains possible but is strictly worse and error-prone for a 200+ file system.)
+- **Recommended: create a fresh repository** (e.g., `pure-foodmart-erp`) and add it to our session — this blueprint repo stays as-is; the ERP gets a clean home.
+- **Your role per batch (no coding):** run the exact commands I give you (or let me run them here), paste back any error output, supply secrets (Nuport/Steadfast keys) into the deployment platform's secret manager — never into chat or the repo — and confirm real-world numbers (e.g., "does the dashboard's courier balance match the Steadfast portal?").
+- **Verification discipline:** every batch ships with automated tests I write and run; integration points against live Nuport/Steadfast are validated in *your* environment in Phase 0/3/4 with recorded sample payloads, because only your credentials can reach those APIs.
+- **Demo mode:** the app includes a seeded demo dataset so every screen is fully clickable before any live API is connected — you can review UI/UX from Batch 8 onward.
+
+### 18.2 Monorepo layout (what gets generated)
+
+```
+pure-foodmart-erp/
+├─ package.json, pnpm-workspace.yaml, turbo.json, .env.example
+├─ docker-compose.yml            # local Postgres 16 + Redis
+├─ db/migrations/                # 001_*.sql … numbered, forward-only
+├─ apps/
+│  ├─ api/                       # NestJS: REST + webhooks + auth
+│  ├─ worker/                    # BullMQ consumers & schedulers
+│  └─ web/                       # React+Vite+Tailwind; PWA; Capacitor android/
+└─ packages/
+   ├─ domain/                    # shared types, Money (integer-poisha), zod schemas
+   ├─ ledger/                    # THE only journal writer + hash chain
+   ├─ inventory/                 # BOM explosion, MWA costing
+   ├─ nuport-client/             # typed Nuport API client
+   └─ steadfast-client/          # typed Steadfast API client
+```
+
+### 18.3 Generation batches (each = one working session, each ends green)
+
+| Batch | Generates | Key files (representative) | Acceptance gate |
+|-------|-----------|---------------------------|-----------------|
+| **B0 — Scaffold** | Monorepo, tooling, docker-compose, CI skeleton, .env.example | root configs, `docker-compose.yml`, `.github/workflows/ci.yml` | `pnpm install && docker compose up` runs; empty apps boot |
+| **B1 — Database** | All migrations from §9 DDL + seed (chart of accounts §3, posting rules §4.7, fiscal periods) | `db/migrations/001_enums.sql` … `012_audit.sql`, `db/seed.ts` | Migrations apply cleanly; integrity triggers reject unbalanced/mutated entries in test |
+| **B2 — Domain + Ledger core** | Money type, `post()` engine, hash chain, gapless numbering, trial balance query | `packages/domain/src/money.ts`, `packages/ledger/src/post.ts`, `hash-chain.ts` + tests | 100% of §4 posting matrix covered by unit tests; I1 holds under concurrent posting test |
+| **B3 — Inventory/BOM engine** | Items, BOM versioning, MWA costing, explosion algorithm §5.4, stock counts | `packages/inventory/src/{bom-explode,mwa,movements}.ts` + tests | Worked example (5KG jaggery pack → ৳612 COGS) passes; combo-order merge test passes; I3 verifier green |
+| **B4 — Nuport pipeline** | Typed client, webhook endpoint, event log, order state machine, revenue+COGS processor, cron puller | `packages/nuport-client/*`, `apps/api/src/webhooks/nuport.controller.ts`, `apps/worker/src/processors/order.processor.ts` | Replay of recorded sample payloads produces exact expected journal entries; duplicate-event replay = no-op |
+| **B5 — Steadfast pipeline** | Typed client, status/invoice/balance pollers, three-stage fund transitions, auto JE-C1/C2, CSV fallback parser, balance-drift check | `packages/steadfast-client/*`, `apps/worker/src/processors/{steadfast-status,settlement}.processor.ts` | Simulated payout cycle: delivered → invoiced → paid auto-posts C1/C2; drift alert fires on mismatch |
+| **B6 — Portals API** | Expenses, purchases, equity, fixed assets + depreciation cron, stock counts, period close endpoints | `apps/api/src/modules/{expenses,purchases,equity,assets,close}/*` | Month-end close dry run passes checklist §10.4 on seeded data |
+| **B7 — Auth & RBAC** | Users, argon2id, TOTP 2FA, role guards, audit log middleware | `apps/api/src/auth/*` | Role matrix tests: OPERATOR cannot reach ledger endpoints |
+| **B8 — Frontend foundation** | Design system §17.2, layout shells (sidebar/bottom-tabs), i18n (en/bn), auth screens, demo-mode seed | `apps/web/src/{theme,components,layouts,i18n}/*` | App boots in demo mode; S18 works; responsive at 360 px and 1440 px |
+| **B9 — Dashboard + Courier Funds** | S1, S4, S5 with live WebSocket refresh | `apps/web/src/pages/{dashboard,courier-funds,settlement}/*` | Cash strip matches trial balance to the poisha in demo + staging |
+| **B10 — Operational screens** | S2–S3, S6–S13 | `apps/web/src/pages/...` | Every §4 event enterable end-to-end from the UI |
+| **B11 — Reports + Exceptions + Close** | S14–S16, PDF/XLSX export | `apps/web/src/pages/{reports,exceptions,close}/*` | P&L/BS/Cash-Flow tie to trial balance; export opens in Excel |
+| **B12 — Android build** | PWA manifest/service worker, Capacitor config, biometric lock, push, camera capture, offline expense queue | `apps/web/{public/manifest,capacitor.config.ts,android/}` | Signed APK installs on your phone; offline expense syncs without duplication |
+| **B13 — Deployment & go-live** | Dockerfiles, deploy configs (Fly.io/Render + managed Postgres/Redis), backup verification job, runbook, opening-balance wizard | `infra/*`, `docs/runbook.md` | Staging live with your real API keys; Phase 0 discovery executed; one-month parallel run starts |
+
+### 18.4 Sequencing logic
+
+Backend correctness before pixels (B1–B7 before B9–B11) because every screen is a thin view over the ledger — building UI first would mean building it twice. The Steadfast batch (B5) lands immediately after Nuport (B4) so the full money lifecycle (order → delivery → payout → bank) is testable end-to-end before any portal work. Deployment is last but *staging goes up at B4* so live-API discovery isn't blocked on the frontend.
+
+### 18.5 What I need from you at each gate
+
+| When | From you |
+|------|----------|
+| Before B0 | Create the new GitHub repo and add it to the session; choose hosting (recommendation: Fly.io + Neon Postgres + Upstash Redis, ~US$20–40/mo) |
+| B4 | Nuport Company ID + API key entered into staging secrets; 2–3 real order payload samples captured |
+| B5 | Steadfast API key + secret into staging secrets; one real payout statement (CSV export) for the fallback parser |
+| B9+ | UI/UX feedback rounds (screenshots or live staging) |
+| B13 | Opening balances: physical cash count, bank/bKash balances, stock count, Steadfast dues, asset list, partner split |
 
 ---
 
