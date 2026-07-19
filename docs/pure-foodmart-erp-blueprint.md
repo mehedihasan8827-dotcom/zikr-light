@@ -30,6 +30,7 @@
 16. [Implementation Roadmap](#16-implementation-roadmap)
 17. [Cross-Platform UI/UX Blueprint — Desktop Web + Android](#17-cross-platform-uiux-blueprint--desktop-web--android)
 18. [Step-by-Step Code Generation Roadmap (AI-Built)](#18-step-by-step-code-generation-roadmap-ai-built)
+19. [Multi-Tenant SaaS Architecture (v3 pivot)](#19-multi-tenant-saas-architecture-v3-pivot)
 
 ---
 
@@ -1419,6 +1420,78 @@ Backend correctness before pixels (B1–B7 before B9–B11) because every screen
 | B5 | Steadfast API key + secret into staging secrets; one real payout statement (CSV export) for the fallback parser |
 | B9+ | UI/UX feedback rounds (screenshots or live staging) |
 | B13 | Opening balances: physical cash count, bank/bKash balances, stock count, Steadfast dues, asset list, partner split |
+
+---
+
+## 19. Multi-Tenant SaaS Architecture (v3 pivot)
+
+**Strategic change:** the ERP is no longer a single-business tool — it is a
+multi-tenant SaaS platform. Every merchant (tenant) subscribes, connects their
+own Nuport/Steadfast credentials, and operates a fully isolated instance of
+everything specified in §1–§16. This section supersedes the single-tenant
+aspects of §9; **the implementation repo's `db/migrations/` is now the
+authoritative DDL** (the §9 listing remains as the accounting-structure
+reference).
+
+### 19.1 Tenancy & isolation model
+
+- **Single PostgreSQL, shared schema, `tenant_id` on every business table**,
+  enforced by **Row-Level Security** — the same philosophy as the ledger
+  triggers: isolation is a *database guarantee*, not an application `WHERE`
+  clause someone can forget.
+- Every runtime transaction opens with
+  `SELECT set_config('app.tenant_id', <id>, true)`. RLS policies
+  (`USING/WITH CHECK tenant_id = app_tenant_id()`) make other tenants' rows
+  **invisible and un-writable**, and `DEFAULT app_tenant_id()` on `tenant_id`
+  columns stamps every insert. Policies are `FORCE`d — even the table owner is
+  subject to them, so dev/test exercise exactly what production enforces.
+- **Per-tenant ledgers:** `ledger_sequence` is keyed by tenant — each merchant
+  has an independent gapless entry numbering and an independent SHA-256 hash
+  chain. Chart of accounts, fiscal periods (and period locks), items/BOMs,
+  orders, settlements, equity, and assets are all per-tenant. Verified by
+  automated tests: cross-tenant reads return zero rows, cross-tenant writes
+  are rejected by policy, and one tenant's period lock does not affect another.
+- **Provisioning:** `provision_tenant(name, slug)` creates the tenant row,
+  ledger sequence, standard 43-account chart, and fiscal periods atomically.
+- `posting_rules` stays **global** (platform-defined accounting logic);
+  `schema_migrations` global; everything financial is tenant-scoped.
+
+### 19.2 Identity & RBAC
+
+| Level | Mechanism | Capabilities |
+|-------|-----------|--------------|
+| **Super Admin** (platform staff) | `users.is_super_admin = TRUE`; operates through a dedicated `BYPASSRLS` database role in production | Super Admin Panel: manage tenants/subscriptions (`tenants.status`: ACTIVE/SUSPENDED/CANCELLED, `plan`), global platform health, backend overrides on merchant request — every override lands in `audit_log` (with `tenant_id NULL` = platform-level actions) |
+| **TENANT_ADMIN** | `tenant_users` membership | Full merchant control: API keys, users, period locks, all portals |
+| **ACCOUNTANT** | membership | Post, reconcile, close periods |
+| **STAFF** | membership | Operational entry only (expenses, purchases, stock counts) |
+| **VIEWER** | membership | Dashboards & reports, read-only |
+
+`users` is global (one email, one account); a user can belong to multiple
+tenants with different roles via `tenant_users (user_id, tenant_id, role)`.
+
+### 19.3 Merchant-owned integrations
+
+`tenant_integrations (tenant_id, provider NUPORT|STEADFAST,
+credentials_ciphertext, config)` — each merchant configures their own API
+keys in their dashboard. Credentials are sealed with **AES-256-GCM under a
+platform master key** (host secret manager) at the application layer;
+plaintext never reaches the database, logs, or other tenants. All ingestion
+pipelines (§2, §6) run **per tenant**: webhook URLs carry a tenant-scoped
+token, pollers iterate active tenants, and every job sets the tenant context
+before touching data.
+
+### 19.4 Impact map on earlier sections
+
+| Section | Change under SaaS |
+|---------|-------------------|
+| §2 pipelines | Per-tenant credentials, per-tenant sync cursors and event logs |
+| §3 chart | Seeded per tenant at provisioning (renamable per merchant) |
+| §4 posting rules | Unchanged — global platform logic, per-tenant application |
+| §9 schema | `tenant_id` + composite uniques everywhere; repo migrations authoritative |
+| §10 invariants | All invariants (I1–I6, hash chain) evaluated **per tenant**; platform-wide sweep job iterates tenants |
+| §13 dashboards | Merchant Admin Dashboard per tenant + new Super Admin Panel (tenant list, subscription state, global health, integrity-alert rollup) |
+| §15 security | Runtime DB role: RLS-subject, no TRUNCATE, no DDL; platform ops role: BYPASSRLS, break-glass audited |
+| §17 UI | Adds Super Admin Panel screens; merchant app unchanged |
 
 ---
 
