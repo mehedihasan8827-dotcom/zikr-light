@@ -44,7 +44,7 @@
   background: #FFFFFF;
   border: 1px solid var(--zl-line);
   border-radius: 26px;
-  padding: 44px 44px 30px;
+  padding: 42px 44px 46px;
   text-align: center;
   box-shadow: 0 1px 1px rgba(4, 50, 33, .03),
               0 4px 10px -6px rgba(4, 50, 33, .08),
@@ -67,45 +67,13 @@
 
 .zl-order__card > * { position: relative; }
 
-/* ---------- উপরের ছোট ব্যাজ ---------- */
-.zl-order__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 16px 6px;
-  margin: 0 0 22px;
-  border: 1px solid var(--zl-line);
-  border-radius: 999px;
-  background: var(--zl-mint);
-  color: var(--zl-green);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: .01em;
-}
-
-.zl-order__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--zl-green);
-  box-shadow: 0 0 0 4px rgba(11, 107, 58, .14);
-}
-
-/* ---------- হেডিং ---------- */
+/* ---------- হেডলাইন ---------- */
 .zl-order__title {
-  margin: 0 0 12px;
+  margin: 0 0 28px;
   font-size: clamp(22px, 3.8vw, 28px);
   font-weight: 700;
   line-height: 1.45;
   letter-spacing: -.01em;
-}
-
-.zl-order__subtitle {
-  margin: 0 auto 30px;
-  max-width: 42ch;
-  font-size: clamp(15px, 2.4vw, 16.5px);
-  line-height: 1.75;
-  color: var(--zl-muted);
 }
 
 /* ---------- বাটন ---------- */
@@ -197,36 +165,11 @@
   background: var(--zl-line);
 }
 
-/* ---------- নিচের ট্রাস্ট লাইন ---------- */
-.zl-order__trust {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px 24px;
-  margin: 30px 0 0;
-  padding: 20px 0 0;
-  border-top: 1px solid var(--zl-line);
-  list-style: none;
-  color: var(--zl-muted);
-  font-size: 14px;
-}
-
-.zl-order__trust li {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.zl-order__trust svg {
-  color: var(--zl-green);
-  opacity: .85;
-}
-
 /* ---------- মোবাইল ---------- */
 @media (max-width: 520px) {
   .zl-order { padding: 40px 16px 48px; }
-  .zl-order__card { padding: 32px 22px 28px; border-radius: 22px; }
-  .zl-order__trust { gap: 8px 16px; font-size: 13px; }
+  .zl-order__card { padding: 32px 22px 34px; border-radius: 22px; }
+  .zl-order__title { margin-bottom: 24px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -238,16 +181,7 @@
 <section class="zl-order" aria-labelledby="zl-order-title">
   <div class="zl-order__card">
 
-    <p class="zl-order__badge">
-      <span class="zl-order__dot" aria-hidden="true"></span>
-      ফর্ম পূরণ ছাড়াই অর্ডার
-    </p>
-
-    <h2 class="zl-order__title" id="zl-order-title">উপরের ফর্মটি পূরণ করতে চান না?</h2>
-
-    <p class="zl-order__subtitle">
-      নিচের যেকোনো মাধ্যমে জানান — আপনার হয়ে আমরাই অর্ডারটি বসিয়ে দেব।
-    </p>
+    <h2 class="zl-order__title" id="zl-order-title">সরাসরি কথা বলে অর্ডার করুন</h2>
 
     <div class="zl-order__actions">
 
@@ -277,30 +211,6 @@
       </a>
 
     </div>
-
-    <ul class="zl-order__trust">
-      <li>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-        সকাল ৯টা – রাত ১০টা
-      </li>
-      <li>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-        ক্যাশ অন ডেলিভারি
-      </li>
-      <li>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-        দ্রুত কনফার্মেশন
-      </li>
-    </ul>
 
   </div>
 </section>
