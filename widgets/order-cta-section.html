@@ -1,4 +1,6 @@
-<!-- ================= অর্ডার সেকশন — কপি করে HTML উইজেটে পেস্ট করুন =================
+<!-- ====== চেকআউট পেইজের নিচের অর্ডার সেকশন — কপি করে HTML উইজেটে পেস্ট করুন ======
+     বসানোর জায়গা: চেকআউট ফর্ম ও "অর্ডার কনফার্ম করুন" বাটনের ঠিক নিচে।
+
      নাম্বার বদলাতে ৩ জায়গায় এডিট করুন:
      1) href="https://wa.me/8801842311001?text=..."   (দেশ কোড ৮৮ সহ, + বা ০ ছাড়া)
      2) href="tel:+8801842311001"
@@ -24,7 +26,7 @@
     radial-gradient(120% 90% at 50% -10%, rgba(11, 107, 58, .07) 0%, rgba(11, 107, 58, 0) 60%),
     #FFFFFF;
   color: var(--zl-ink);
-  padding: 72px 20px;
+  padding: 56px 20px 64px;
   display: flex;
   justify-content: center;
   -webkit-font-smoothing: antialiased;
@@ -40,7 +42,7 @@
   background: #FFFFFF;
   border: 1px solid var(--zl-line);
   border-radius: 28px;
-  padding: 48px 40px 40px;
+  padding: 40px 40px 34px;
   text-align: center;
   box-shadow: 0 1px 2px rgba(4, 50, 33, .04),
               0 18px 48px -24px rgba(4, 50, 33, .22);
@@ -73,16 +75,16 @@
 /* ---------- হেডিং ---------- */
 .zl-order__title {
   margin: 0 0 12px;
-  font-size: clamp(24px, 4.4vw, 32px);
+  font-size: clamp(22px, 3.8vw, 28px);
   font-weight: 700;
   line-height: 1.45;
   letter-spacing: -.01em;
 }
 
 .zl-order__subtitle {
-  margin: 0 auto 34px;
-  max-width: 44ch;
-  font-size: clamp(15px, 2.4vw, 17px);
+  margin: 0 auto 30px;
+  max-width: 42ch;
+  font-size: clamp(15px, 2.4vw, 16.5px);
   line-height: 1.75;
   color: var(--zl-muted);
 }
@@ -174,6 +176,20 @@
   background: var(--zl-line);
 }
 
+/* ---------- বাটনের নিচের হিন্ট লাইন ---------- */
+.zl-order__hint {
+  margin: 18px auto 0;
+  max-width: 34ch;
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--zl-muted);
+}
+
+.zl-order__hint strong {
+  color: var(--zl-ink);
+  font-weight: 600;
+}
+
 /* ---------- নিচের ট্রাস্ট লাইন ---------- */
 .zl-order__trust {
   display: flex;
@@ -198,8 +214,9 @@
 
 /* ---------- মোবাইল ---------- */
 @media (max-width: 520px) {
-  .zl-order { padding: 48px 16px; }
-  .zl-order__card { padding: 36px 22px 30px; border-radius: 22px; }
+  .zl-order { padding: 40px 16px 48px; }
+  .zl-order__card { padding: 32px 22px 28px; border-radius: 22px; }
+  .zl-order__hint { font-size: 13.5px; }
   .zl-order__trust { gap: 10px 18px; font-size: 13.5px; }
 }
 
@@ -214,21 +231,21 @@
 
     <p class="zl-order__badge">
       <span class="zl-order__dot" aria-hidden="true"></span>
-      অর্ডার করুন সহজেই
+      ফর্ম পূরণ ছাড়াই অর্ডার
     </p>
 
-    <h2 class="zl-order__title" id="zl-order-title">আপনার অর্ডারটি নিশ্চিত করুন</h2>
+    <h2 class="zl-order__title" id="zl-order-title">উপরের ফর্মটি পূরণ করতে চান না?</h2>
 
     <p class="zl-order__subtitle">
-      নিচের যেকোনো একটি মাধ্যমে যোগাযোগ করুন — আমাদের প্রতিনিধি আপনার অর্ডারটি
-      সাথে সাথে নিশ্চিত করে দেবেন।
+      কোনো সমস্যা নেই। নিচের যেকোনো একটি মাধ্যমে আমাদের জানান — আপনার হয়ে
+      আমরাই অর্ডারটি বসিয়ে দেব।
     </p>
 
     <div class="zl-order__actions">
 
       <!-- হোয়াটসঅ্যাপ বাটন -->
       <a class="zl-btn zl-btn--wa"
-         href="https://wa.me/8801842311001?text=আসসালামু%20আলাইকুম%2C%20আমি%20অর্ডার%20করতে%20চাই।"
+         href="https://wa.me/8801842311001?text=আসসালামু%20আলাইকুম%2C%20আমি%20ফর্ম%20পূরণ%20না%20করে%20অর্ডার%20করতে%20চাই।"
          target="_blank" rel="noopener noreferrer"
          aria-label="হোয়াটসঅ্যাপে অর্ডার করুন">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -253,7 +270,19 @@
 
     </div>
 
+    <p class="zl-order__hint">
+      শুধু <strong>পণ্যের নাম, আপনার নাম</strong> আর <strong>ডেলিভারি ঠিকানা</strong>
+      বললেই হবে — বাকিটা আমরা দেখে নেব।
+    </p>
+
     <ul class="zl-order__trust">
+      <li>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        সকাল ৯টা – রাত ১০টা খোলা
+      </li>
       <li>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -266,14 +295,7 @@
              stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
-        সারা দেশে ডেলিভারি
-      </li>
-      <li>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-             stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-        ১০০% অরিজিনাল পণ্য
+        অর্ডার কনফার্ম করে জানানো হবে
       </li>
     </ul>
 
