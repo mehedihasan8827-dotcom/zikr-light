@@ -1,0 +1,119 @@
+/*
+ * Live Order Counter badge.
+ *
+ * Everything is scoped under .loc-badge and sized in em so the badge inherits
+ * the hero section's font sizing instead of fighting the theme.
+ */
+
+.loc-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5em;
+	padding: 0.4em 0.85em;
+	border: 1px solid rgba(220, 38, 38, 0.18);
+	border-radius: 999px;
+	background: rgba(254, 242, 242, 0.9);
+	font-size: 0.95em;
+	line-height: 1.4;
+	vertical-align: middle;
+	white-space: nowrap;
+	max-width: 100%;
+}
+
+.loc-live {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35em;
+	padding: 0.15em 0.5em;
+	border-radius: 999px;
+	background: #fee2e2;
+	color: #dc2626;
+	font-size: 0.8em;
+	font-weight: 700;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+/*
+ * A styled dot rather than the red-circle emoji: it matches the text colour
+ * exactly, sits on the same baseline across platforms, and can be animated.
+ */
+.loc-dot {
+	width: 0.5em;
+	height: 0.5em;
+	border-radius: 50%;
+	background: #ef4444;
+	box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6);
+	animation: loc-pulse 1.8s ease-out infinite;
+}
+
+@keyframes loc-pulse {
+	0% {
+		box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55);
+		opacity: 1;
+	}
+
+	70% {
+		box-shadow: 0 0 0 0.5em rgba(239, 68, 68, 0);
+		opacity: 0.75;
+	}
+
+	100% {
+		box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+		opacity: 1;
+	}
+}
+
+.loc-text {
+	margin-right: -0.15em;
+	color: #7f1d1d;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/*
+ * The number sits in its own positioned box so the outgoing digit can be taken
+ * out of flow mid-animation without the surrounding text shifting.
+ */
+.loc-count {
+	position: relative;
+	display: inline-block;
+	min-width: 1.7ch;
+	overflow: hidden;
+	color: #b91c1c;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	text-align: center;
+}
+
+.loc-num {
+	display: inline-block;
+	transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+}
+
+.loc-num.loc-in {
+	transform: translateY(0.9em);
+	opacity: 0;
+}
+
+.loc-num.loc-out {
+	position: absolute;
+	left: 0;
+	right: 0;
+	transform: translateY(-0.9em);
+	opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.loc-dot {
+		animation: none;
+	}
+
+	.loc-num,
+	.loc-num.loc-in,
+	.loc-num.loc-out {
+		transition: none;
+		transform: none;
+	}
+}
