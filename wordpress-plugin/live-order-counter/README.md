@@ -12,12 +12,15 @@ No database tables, no cron jobs, no scheduled resets, and one small HTTP reques
 
 **Option A — upload a zip**
 
-1. Zip the `live-order-counter` folder so the archive contains `live-order-counter/live-order-counter.php` at its root:
+1. Build the archive:
    ```
    cd wordpress-plugin
-   zip -r live-order-counter.zip live-order-counter
+   ./build-zip.sh
    ```
+   This lints every PHP file before packing, so a syntax error can't reach your site as a white screen on activation. It produces `live-order-counter.zip` with the plugin folder at the archive root, which is the layout WordPress expects.
 2. In WordPress go to **Plugins → Add New → Upload Plugin**, choose the zip, then **Install Now** and **Activate**.
+
+Re-run the script after any edit to refresh the archive.
 
 **Option B — copy over FTP or SSH**
 
