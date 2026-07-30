@@ -1,0 +1,240 @@
+<!-- ====== "আমের অফার মূল্য" সেকশন — HTML উইজেটে পেস্ট করুন ======
+
+     পুরনো সেকশনের বদলে বসবে। আঁকাবাঁকা আন্ডারলাইন বাদ দিয়ে দুটি প্যাকেজ
+     পাশাপাশি কার্ডে দেখানো হয়েছে, সাথে কেজিপ্রতি দাম — যাতে বড় প্যাকেজের
+     সুবিধাটা কাস্টমারের চোখে পড়ে।
+
+     ⚠️ "প্রায় ২৪-৩০টি আম" হিসাবটা আপনার নিজের তথ্য থেকে নেওয়া
+        (৪-৫ টি আমে ১ কেজি)। আসল সংখ্যা ভিন্ন হলে বদলে দিন।
+================================================================== -->
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
+
+.zl-price {
+  /* ---- থিম কালার ---- */
+  --zl-green: #0B6B3A;
+  --zl-green-dark: #07502B;
+  --zl-mint: #F3F8F4;
+  --zl-line: #E4EEE8;
+  --zl-ink: #12251B;
+  --zl-muted: #5F7268;
+
+  font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(11, 107, 58, .07) 0%, rgba(11, 107, 58, 0) 60%),
+    #FFFFFF;
+  color: var(--zl-ink);
+  padding: 56px 20px 64px;
+  display: flex;
+  justify-content: center;
+  -webkit-font-smoothing: antialiased;
+}
+
+.zl-price *,
+.zl-price *::before,
+.zl-price *::after { box-sizing: border-box; }
+
+.zl-price__card {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  max-width: 560px;
+  background: #FFFFFF;
+  border: 1px solid var(--zl-line);
+  border-radius: 26px;
+  padding: 42px 40px 40px;
+  box-shadow: 0 1px 1px rgba(4, 50, 33, .03),
+              0 4px 10px -6px rgba(4, 50, 33, .08),
+              0 24px 56px -28px rgba(4, 50, 33, .26);
+}
+
+.zl-price__card::before {
+  content: "";
+  position: absolute;
+  top: -55%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 130%;
+  padding-bottom: 110%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(11, 107, 58, .06) 0%, rgba(11, 107, 58, 0) 62%);
+  pointer-events: none;
+}
+
+.zl-price__card > * { position: relative; }
+
+/* ---------- হেডিং ---------- */
+.zl-price__title {
+  margin: 0;
+  font-size: clamp(22px, 3.8vw, 28px);
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -.01em;
+  text-align: center;
+}
+
+.zl-price__accent {
+  width: 48px;
+  height: 3px;
+  margin: 14px auto 0;
+  border-radius: 999px;
+  background: var(--zl-green);
+}
+
+/* ---------- প্যাকেজ দুটি ---------- */
+.zl-price__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 30px 0 0;
+}
+
+.zl-pack {
+  position: relative;
+  padding: 26px 18px 22px;
+  border: 1px solid var(--zl-line);
+  border-radius: 18px;
+  background: #FFFFFF;
+  text-align: center;
+}
+
+/* জনপ্রিয় প্যাকেজটি আলাদা করে বোঝানো */
+.zl-pack--popular {
+  border: 1.5px solid var(--zl-green);
+  background: var(--zl-mint);
+  box-shadow: 0 10px 26px -18px rgba(4, 50, 33, .45);
+}
+
+.zl-pack__badge {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 14px 3px;
+  border-radius: 999px;
+  background: var(--zl-green);
+  color: #FFFFFF;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.zl-pack__weight {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--zl-muted);
+}
+
+.zl-pack__price {
+  margin: 6px 0 0;
+  font-size: clamp(26px, 5vw, 32px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+  color: var(--zl-green-dark);
+}
+
+.zl-pack__price span {
+  font-size: .58em;
+  font-weight: 600;
+}
+
+.zl-pack__rate {
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--zl-line);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--zl-muted);
+}
+
+.zl-pack__save {
+  display: inline-block;
+  margin: 10px 0 0;
+  padding: 3px 11px 2px;
+  border-radius: 999px;
+  background: rgba(11, 107, 58, .1);
+  color: var(--zl-green-dark);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ---------- ফ্রি ডেলিভারি লাইন ---------- */
+.zl-price__delivery {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin: 24px 0 0;
+  padding: 15px 18px;
+  border: 1px dashed rgba(11, 107, 58, .32);
+  border-radius: 14px;
+  background: var(--zl-mint);
+  color: var(--zl-green-dark);
+  font-size: clamp(14.5px, 2.4vw, 16px);
+  font-weight: 600;
+  text-align: center;
+}
+
+.zl-price__delivery svg { flex: none; }
+
+/* ---------- মোবাইল ---------- */
+@media (max-width: 520px) {
+  .zl-price { padding: 40px 16px 48px; }
+  .zl-price__card { padding: 32px 20px 30px; border-radius: 22px; }
+  .zl-price__grid {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    margin-top: 34px;
+  }
+  .zl-pack { padding: 24px 16px 20px; }
+}
+</style>
+
+<section class="zl-price" aria-labelledby="zl-price-title">
+  <div class="zl-price__card">
+
+    <h2 class="zl-price__title" id="zl-price-title">আমের অফার মূল্য</h2>
+    <div class="zl-price__accent" aria-hidden="true"></div>
+
+    <div class="zl-price__grid">
+
+      <!-- ৬ কেজি প্যাকেজ -->
+      <div class="zl-pack">
+        <p class="zl-pack__weight">৬ কেজি</p>
+        <p class="zl-pack__price">১,২৯০ <span>টাকা</span></p>
+        <p class="zl-pack__rate">
+          কেজিপ্রতি ২১৫ টাকা<br>
+          প্রায় ২৪-৩০টি আম
+        </p>
+      </div>
+
+      <!-- ১০ কেজি প্যাকেজ -->
+      <div class="zl-pack zl-pack--popular">
+        <span class="zl-pack__badge">সবচেয়ে জনপ্রিয়</span>
+        <p class="zl-pack__weight">১০ কেজি</p>
+        <p class="zl-pack__price">২,১০০ <span>টাকা</span></p>
+        <p class="zl-pack__rate">
+          কেজিপ্রতি ২১০ টাকা<br>
+          প্রায় ৪০-৫০টি আম
+        </p>
+        <span class="zl-pack__save">৫০ টাকা সাশ্রয়</span>
+      </div>
+
+    </div>
+
+    <p class="zl-price__delivery">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M1 3h15v13H1z"/>
+        <path d="M16 8h4l3 3v5h-7z"/>
+        <circle cx="5.5" cy="18.5" r="2.5"/>
+        <circle cx="18.5" cy="18.5" r="2.5"/>
+      </svg>
+      সারা দেশে হোম ডেলিভারি সম্পূর্ণ ফ্রি
+    </p>
+
+  </div>
+</section>

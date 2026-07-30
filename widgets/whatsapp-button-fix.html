@@ -1,0 +1,131 @@
+<!-- ====== ভাসমান হোয়াটসঅ্যাপ বাটনের ওভারল্যাপ ফিক্স ======
+
+     সমস্যা: বাটনটি fixed পজিশনে থাকায় স্ক্রল করার সময় যেখানেই পড়ে, সেখানের
+     লেখা ঢেকে ফেলে। তিন ধাপে সমাধান:
+       1) বাটনটি একটু ছোট করে কোণায় গুছিয়ে বসানো
+       2) স্ক্রল করার সময় সরে যায়, স্ক্রল থামলে ফিরে আসে — পড়ার সময় লেখা মুক্ত
+       3) পেইজের নিচে ক্লিয়ারেন্স, যাতে ফুটার চাপা না পড়ে
+
+     বসানোর জায়গা: পেইজের যেকোনো HTML উইজেটে (সবচেয়ে নিচের দিকে হলে ভালো),
+     অথবা WordPress → Appearance → Customize → Additional CSS + Footer Scripts।
+
+     বাটন একদম ছোট/বড় লাগলে নিচের --zl-wa-scale মানটা বদলান (0.7 – 1)।
+============================================================================ -->
+
+<style>
+:root { --zl-wa-scale: .82; }
+
+/* বাটনটি JS দিয়ে খুঁজে বের করে এই ক্লাসটি বসানো হয় */
+.zl-wafix {
+  right: 10px !important;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+  transform: scale(var(--zl-wa-scale)) !important;
+  transform-origin: 100% 100% !important;
+  transition: opacity .25s ease, transform .25s ease !important;
+}
+
+/* স্ক্রল করার সময় সরে যাওয়ার অবস্থা */
+.zl-wafix--away {
+  opacity: 0 !important;
+  transform: scale(var(--zl-wa-scale)) translateY(16px) !important;
+  pointer-events: none !important;
+}
+
+/* পেইজের একদম নিচের কনটেন্ট যাতে বাটনের নিচে আটকে না থাকে */
+@media (max-width: 900px) {
+  body { padding-bottom: 76px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zl-wafix { transition: none !important; }
+}
+</style>
+
+<script>
+(function () {
+  "use strict";
+
+  /* জনপ্রিয় হোয়াটসঅ্যাপ প্লাগিনগুলোর সেলেক্টর — না মিললে নিচে
+     wa.me লিংক ধরে fixed প্যারেন্ট খুঁজে নেওয়া হয় */
+  var SELECTORS = [
+    ".ht-ctc", "#ht-ctc-chat", ".ht-ctc-chat",
+    ".joinchat", ".joinchat__button",
+    ".qlwapp", "#qlwapp", ".qlwapp-toggle",
+    ".wp-social-chat", ".ws-float", ".ws-float-button",
+    ".elementor-floating-buttons", ".elementor-float-button",
+    ".whatsapp-float", ".wa-float", ".floating-wpp", ".float-wa"
+  ];
+
+  var IDLE_MS = 550;      /* স্ক্রল থামার কত পরে বাটন ফিরবে */
+  var MIN_SCROLL = 8;     /* এর কম স্ক্রলে বাটন সরবে না */
+
+  function isFixed(el) {
+    return window.getComputedStyle(el).position === "fixed";
+  }
+
+  /* এলিমেন্ট নিজে fixed না হলে উপরের দিকে fixed প্যারেন্ট খোঁজে */
+  function fixedSelfOrAncestor(el) {
+    var node = el;
+    while (node && node !== document.body) {
+      if (isFixed(node)) return node;
+      node = node.parentElement;
+    }
+    return null;
+  }
+
+  function findButton() {
+    for (var i = 0; i < SELECTORS.length; i++) {
+      var el = document.querySelector(SELECTORS[i]);
+      if (el) {
+        var hit = fixedSelfOrAncestor(el);
+        if (hit) return hit;
+      }
+    }
+    /* ফলব্যাক: যেকোনো হোয়াটসঅ্যাপ লিংক, যার কোনো প্যারেন্ট fixed */
+    var links = document.querySelectorAll(
+      'a[href*="wa.me"], a[href*="whatsapp.com"], a[href*="whatsapp://"]'
+    );
+    for (var j = 0; j < links.length; j++) {
+      var found = fixedSelfOrAncestor(links[j]);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  var button = null;
+  var idleTimer = null;
+  var lastY = window.pageYOffset;
+
+  function onScroll() {
+    var y = window.pageYOffset;
+    if (Math.abs(y - lastY) < MIN_SCROLL) return;
+    lastY = y;
+
+    button.classList.add("zl-wafix--away");
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function () {
+      button.classList.remove("zl-wafix--away");
+    }, IDLE_MS);
+  }
+
+  function activate(el) {
+    button = el;
+    button.classList.add("zl-wafix");
+    window.addEventListener("scroll", onScroll, { passive: true });
+  }
+
+  /* প্লাগিন দেরিতে লোড হতে পারে — কিছুক্ষণ ধরে খোঁজা হয় */
+  var tries = 0;
+  function boot() {
+    var el = findButton();
+    if (el) { activate(el); return; }
+    if (++tries < 25) setTimeout(boot, 300);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})();
+</script>
