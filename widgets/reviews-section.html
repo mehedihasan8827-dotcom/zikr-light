@@ -19,16 +19,19 @@
 
 .zl-reviews {
   /* ---- থিম কালার ---- */
-  --zl-deep-1: #0C5537;
-  --zl-deep-2: #0A4A30;
-  --zl-deep-3: #05291B;
-  --zl-gold: #D9BE7A;
-  --zl-gold-bright: #EBD49A;
-  --zl-cream: #F5EFE0;
-  --zl-paper: #F7F3EA;
+  --zl-green-900: #063D22;
+  --zl-green-800: #0A5230;
+  --zl-green-700: #0B6B3A;
+  --zl-ink: #0D482B;
+  --zl-muted: #5C7568;
+  --zl-line: #CBE0D3;
+  --zl-line-soft: #DCEAE1;
+  --zl-mint: #F1F8F3;
+  --zl-paper: #FBFDFB;
 
   font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--zl-paper);
+  color: var(--zl-ink);
   padding: 56px 20px 64px;
   display: flex;
   justify-content: center;
@@ -44,25 +47,25 @@
   overflow: hidden;
   width: 100%;
   max-width: 560px;
-  border-radius: 24px;
-  padding: 42px 40px 38px;
-  background: linear-gradient(165deg, var(--zl-deep-1) 0%, var(--zl-deep-2) 45%, var(--zl-deep-3) 100%);
-  border: 1px solid rgba(217, 190, 122, .3);
-  box-shadow: 0 2px 4px rgba(5, 41, 27, .2),
-              0 18px 40px -18px rgba(5, 41, 27, .55),
-              inset 0 1px 0 rgba(235, 212, 154, .16);
+  background: #FFFFFF;
+  border: 1.5px solid var(--zl-line);
+  border-radius: 20px;
+  padding: 44px 40px 38px;
+  box-shadow: 0 1px 2px rgba(6, 61, 34, .05),
+              0 6px 14px -8px rgba(6, 61, 34, .16),
+              0 22px 44px -26px rgba(6, 61, 34, .3);
 }
 
 .zl-reviews__card::before {
   content: "";
   position: absolute;
-  top: -40%;
+  top: -50%;
   left: 50%;
   transform: translateX(-50%);
-  width: 120%;
-  padding-bottom: 90%;
+  width: 125%;
+  padding-bottom: 100%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(217, 190, 122, .13) 0%, rgba(217, 190, 122, 0) 65%);
+  background: radial-gradient(circle, rgba(11, 107, 58, .05) 0%, rgba(11, 107, 58, 0) 62%);
   pointer-events: none;
 }
 
@@ -71,43 +74,25 @@
 /* ---------- হেডিং ---------- */
 .zl-reviews__title {
   margin: 0;
-  color: var(--zl-cream);
-  font-size: clamp(23px, 4vw, 30px);
+  color: var(--zl-green-900);
+  font-size: clamp(25px, 4.3vw, 32px);
   font-weight: 700;
   line-height: 1.4;
-  letter-spacing: -.01em;
+  letter-spacing: -.02em;
   text-align: center;
 }
 
-.zl-reviews__orn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  margin: 16px 0 0;
-}
-
-.zl-reviews__orn i {
-  display: block;
-  width: 44px;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(217, 190, 122, 0), var(--zl-gold));
-}
-
-.zl-reviews__orn i:last-child {
-  background: linear-gradient(90deg, var(--zl-gold), rgba(217, 190, 122, 0));
-}
-
-.zl-reviews__orn span {
-  width: 6px;
-  height: 6px;
-  transform: rotate(45deg);
-  background: var(--zl-gold);
+.zl-reviews__accent {
+  width: 56px;
+  height: 4px;
+  margin: 16px auto 0;
+  border-radius: 999px;
+  background: var(--zl-green-700);
 }
 
 /* ---------- রিভিউ তালিকা ---------- */
 .zl-reviews__list {
-  margin: 30px 0 0;
+  margin: 32px 0 0;
   padding: 0;
   list-style: none;
   display: flex;
@@ -118,12 +103,12 @@
 .zl-rev {
   position: relative;
   padding: 22px 22px 18px;
+  border: 1.5px solid var(--zl-line);
   border-radius: 16px;
-  background: rgba(255, 255, 255, .045);
-  border: 1px solid rgba(217, 190, 122, .24);
+  background: var(--zl-mint);
 }
 
-/* কোণায় সোনালি উদ্ধৃতি চিহ্ন */
+/* কোণায় সবুজ উদ্ধৃতি চিহ্ন */
 .zl-rev::before {
   content: "\201C";
   position: absolute;
@@ -132,24 +117,25 @@
   font-size: 56px;
   line-height: 1;
   font-family: Georgia, 'Times New Roman', serif;
-  color: rgba(217, 190, 122, .22);
+  color: rgba(10, 82, 48, .2);
   pointer-events: none;
 }
 
 .zl-rev__text {
   margin: 0;
-  color: rgba(245, 239, 224, .92);
-  font-size: clamp(15px, 2.4vw, 16.5px);
-  line-height: 1.8;
+  color: var(--zl-ink);
+  font-size: clamp(15.5px, 2.5vw, 17px);
+  font-weight: 500;
+  line-height: 1.78;
 }
 
 .zl-rev__by {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 14px 0 0;
-  padding-top: 13px;
-  border-top: 1px solid rgba(217, 190, 122, .2);
+  gap: 11px;
+  margin: 15px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--zl-line);
 }
 
 /* নামের প্রথম অক্ষর — ভুয়া ছবি ব্যবহার না করে */
@@ -158,36 +144,35 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
-  background: rgba(217, 190, 122, .14);
-  border: 1px solid rgba(217, 190, 122, .45);
-  color: var(--zl-gold-bright);
-  font-size: 15px;
+  background: var(--zl-green-800);
+  color: #FFFFFF;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .zl-rev__name {
   margin: 0;
-  color: var(--zl-cream);
-  font-size: 15px;
-  font-weight: 600;
+  color: var(--zl-green-900);
+  font-size: 15.5px;
+  font-weight: 700;
   line-height: 1.5;
 }
 
 .zl-rev__place {
   display: block;
+  color: var(--zl-muted);
   font-size: 13.5px;
-  font-weight: 400;
-  color: rgba(245, 239, 224, .68);
+  font-weight: 500;
 }
 
 /* ---------- মোবাইল ---------- */
 @media (max-width: 520px) {
   .zl-reviews { padding: 40px 16px 48px; }
-  .zl-reviews__card { padding: 34px 20px 30px; border-radius: 20px; }
-  .zl-reviews__list { margin-top: 24px; }
+  .zl-reviews__card { padding: 34px 20px 30px; border-radius: 18px; }
+  .zl-reviews__list { margin-top: 26px; }
   .zl-rev { padding: 20px 18px 16px; }
 }
 </style>
@@ -196,7 +181,7 @@
   <div class="zl-reviews__card">
 
     <h2 class="zl-reviews__title" id="zl-reviews-title">কাস্টমারদের মতামত</h2>
-    <div class="zl-reviews__orn" aria-hidden="true"><i></i><span></span><i></i></div>
+    <div class="zl-reviews__accent" aria-hidden="true"></div>
 
     <ul class="zl-reviews__list">
 

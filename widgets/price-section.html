@@ -13,16 +13,19 @@
 
 .zl-price {
   /* ---- থিম কালার ---- */
-  --zl-deep-1: #0C5537;
-  --zl-deep-2: #0A4A30;
-  --zl-deep-3: #05291B;
-  --zl-gold: #D9BE7A;
-  --zl-gold-bright: #EBD49A;
-  --zl-cream: #F5EFE0;
-  --zl-paper: #F7F3EA;
+  --zl-green-900: #063D22;
+  --zl-green-800: #0A5230;
+  --zl-green-700: #0B6B3A;
+  --zl-ink: #0D482B;
+  --zl-muted: #5C7568;
+  --zl-line: #CBE0D3;
+  --zl-line-soft: #DCEAE1;
+  --zl-mint: #F1F8F3;
+  --zl-paper: #FBFDFB;
 
   font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--zl-paper);
+  color: var(--zl-ink);
   padding: 56px 20px 64px;
   display: flex;
   justify-content: center;
@@ -38,25 +41,25 @@
   overflow: hidden;
   width: 100%;
   max-width: 560px;
-  border-radius: 24px;
-  padding: 42px 40px 40px;
-  background: linear-gradient(165deg, var(--zl-deep-1) 0%, var(--zl-deep-2) 45%, var(--zl-deep-3) 100%);
-  border: 1px solid rgba(217, 190, 122, .3);
-  box-shadow: 0 2px 4px rgba(5, 41, 27, .2),
-              0 18px 40px -18px rgba(5, 41, 27, .55),
-              inset 0 1px 0 rgba(235, 212, 154, .16);
+  background: #FFFFFF;
+  border: 1.5px solid var(--zl-line);
+  border-radius: 20px;
+  padding: 44px 40px 40px;
+  box-shadow: 0 1px 2px rgba(6, 61, 34, .05),
+              0 6px 14px -8px rgba(6, 61, 34, .16),
+              0 22px 44px -26px rgba(6, 61, 34, .3);
 }
 
 .zl-price__card::before {
   content: "";
   position: absolute;
-  top: -40%;
+  top: -50%;
   left: 50%;
   transform: translateX(-50%);
-  width: 120%;
-  padding-bottom: 90%;
+  width: 125%;
+  padding-bottom: 100%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(217, 190, 122, .13) 0%, rgba(217, 190, 122, 0) 65%);
+  background: radial-gradient(circle, rgba(11, 107, 58, .05) 0%, rgba(11, 107, 58, 0) 62%);
   pointer-events: none;
 }
 
@@ -65,38 +68,20 @@
 /* ---------- হেডিং ---------- */
 .zl-price__title {
   margin: 0;
-  color: var(--zl-cream);
-  font-size: clamp(23px, 4vw, 30px);
+  color: var(--zl-green-900);
+  font-size: clamp(25px, 4.3vw, 32px);
   font-weight: 700;
   line-height: 1.4;
-  letter-spacing: -.01em;
+  letter-spacing: -.02em;
   text-align: center;
 }
 
-.zl-price__orn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  margin: 16px 0 0;
-}
-
-.zl-price__orn i {
-  display: block;
-  width: 44px;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(217, 190, 122, 0), var(--zl-gold));
-}
-
-.zl-price__orn i:last-child {
-  background: linear-gradient(90deg, var(--zl-gold), rgba(217, 190, 122, 0));
-}
-
-.zl-price__orn span {
-  width: 6px;
-  height: 6px;
-  transform: rotate(45deg);
-  background: var(--zl-gold);
+.zl-price__accent {
+  width: 56px;
+  height: 4px;
+  margin: 16px auto 0;
+  border-radius: 999px;
+  background: var(--zl-green-700);
 }
 
 /* ---------- প্যাকেজ দুটি ---------- */
@@ -111,70 +96,72 @@
   position: relative;
   text-align: center;
   padding: 26px 16px 22px;
+  border: 1.5px solid var(--zl-line);
   border-radius: 16px;
-  background: rgba(255, 255, 255, .045);
-  border: 1px solid rgba(217, 190, 122, .24);
+  background: #FFFFFF;
 }
 
-/* জনপ্রিয় প্যাকেজটি সোনালি বর্ডারে আলাদা */
+/* জনপ্রিয় প্যাকেজটি মোটা সবুজ বর্ডারে আলাদা */
 .zl-pack--popular {
-  background: rgba(217, 190, 122, .11);
-  border: 1.5px solid var(--zl-gold);
-  box-shadow: 0 10px 26px -16px rgba(5, 41, 27, .7);
+  border: 2.5px solid var(--zl-green-800);
+  background: var(--zl-mint);
+  box-shadow: 0 10px 26px -18px rgba(6, 61, 34, .5);
 }
 
 .zl-pack__badge {
   position: absolute;
-  top: -11px;
+  top: -12px;
   left: 50%;
   transform: translateX(-50%);
   padding: 4px 14px 3px;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--zl-gold-bright), var(--zl-gold));
-  color: var(--zl-deep-3);
-  font-size: 12.5px;
+  background: var(--zl-green-800);
+  color: #FFFFFF;
+  font-size: 13px;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .zl-pack__weight {
   margin: 0;
-  font-size: 15.5px;
+  color: var(--zl-muted);
+  font-size: 16px;
   font-weight: 600;
-  color: rgba(245, 239, 224, .78);
 }
 
 .zl-pack__price {
   margin: 6px 0 0;
-  font-size: clamp(27px, 5vw, 33px);
+  color: var(--zl-green-900);
+  font-size: clamp(29px, 5.4vw, 36px);
   font-weight: 700;
   line-height: 1.15;
-  letter-spacing: -.02em;
-  color: var(--zl-gold-bright);
+  letter-spacing: -.03em;
 }
 
 .zl-pack__price span {
-  font-size: .55em;
+  font-size: .5em;
   font-weight: 600;
-  color: var(--zl-gold);
+  color: var(--zl-muted);
+  letter-spacing: 0;
 }
 
 .zl-pack__rate {
-  margin: 12px 0 0;
-  padding-top: 11px;
-  border-top: 1px solid rgba(217, 190, 122, .2);
-  font-size: 14px;
+  margin: 13px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--zl-line-soft);
+  color: var(--zl-ink);
+  font-size: 14.5px;
+  font-weight: 500;
   line-height: 1.7;
-  color: rgba(245, 239, 224, .72);
 }
 
 .zl-pack__save {
   display: inline-block;
-  margin: 11px 0 0;
-  padding: 3px 12px 2px;
+  margin: 12px 0 0;
+  padding: 4px 13px 3px;
   border-radius: 999px;
-  background: var(--zl-gold);
-  color: var(--zl-deep-3);
+  background: var(--zl-green-800);
+  color: #FFFFFF;
   font-size: 13px;
   font-weight: 700;
 }
@@ -184,14 +171,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
+  gap: 10px;
   margin: 26px 0 0;
-  padding: 15px 18px;
-  border: 1px dashed rgba(217, 190, 122, .45);
+  padding: 16px 18px;
   border-radius: 13px;
-  color: var(--zl-gold-bright);
-  font-size: clamp(14.5px, 2.4vw, 16px);
-  font-weight: 600;
+  background: var(--zl-green-800);
+  color: #FFFFFF;
+  font-size: clamp(15px, 2.5vw, 16.5px);
+  font-weight: 700;
   text-align: center;
 }
 
@@ -200,11 +187,11 @@
 /* ---------- মোবাইল ---------- */
 @media (max-width: 520px) {
   .zl-price { padding: 40px 16px 48px; }
-  .zl-price__card { padding: 34px 20px 30px; border-radius: 20px; }
+  .zl-price__card { padding: 34px 20px 30px; border-radius: 18px; }
   .zl-price__grid {
     grid-template-columns: 1fr;
-    gap: 22px;
-    margin-top: 34px;
+    gap: 24px;
+    margin-top: 36px;
   }
   .zl-pack { padding: 24px 16px 20px; }
 }
@@ -214,7 +201,7 @@
   <div class="zl-price__card">
 
     <h2 class="zl-price__title" id="zl-price-title">আমের অফার মূল্য</h2>
-    <div class="zl-price__orn" aria-hidden="true"><i></i><span></span><i></i></div>
+    <div class="zl-price__accent" aria-hidden="true"></div>
 
     <div class="zl-price__grid">
 
@@ -243,8 +230,8 @@
     </div>
 
     <p class="zl-price__delivery">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M1 3h15v13H1z"/>
         <path d="M16 8h4l3 3v5h-7z"/>
         <circle cx="5.5" cy="18.5" r="2.5"/>
