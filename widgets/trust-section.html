@@ -21,7 +21,10 @@
   --zl-line: #CBE0D3;
   --zl-line-soft: #DCEAE1;
   --zl-mint: #F1F8F3;
-  --zl-paper: #FBFDFB;
+  --zl-amber: #E8A317;       /* আমের শাঁসের রং */
+  --zl-amber-soft: #F5C45E;
+  --zl-gold-pale: #F3DCA6;   /* আমের খোসার রং */
+  --zl-paper: #FDFBF5;       /* উষ্ণ প্রায়-সাদা */
 
   font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--zl-paper);
@@ -59,11 +62,25 @@
   width: 125%;
   padding-bottom: 100%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(11, 107, 58, .05) 0%, rgba(11, 107, 58, 0) 62%);
+  background: radial-gradient(circle, rgba(232, 163, 23, .09) 0%, rgba(232, 163, 23, 0) 62%);
   pointer-events: none;
 }
 
 .zl-trust__card > * { position: relative; }
+
+/* কার্ডের উপরে আমের রঙের সরু পট্টি */
+.zl-trust__card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg,
+              var(--zl-green-800) 0%, var(--zl-green-700) 34%,
+              var(--zl-amber) 72%, var(--zl-gold-pale) 100%);
+  pointer-events: none;
+}
 
 /* ---------- হেডিং ---------- */
 .zl-trust__title {
@@ -77,11 +94,11 @@
 }
 
 .zl-trust__accent {
-  width: 56px;
+  width: 64px;
   height: 4px;
   margin: 16px auto 0;
   border-radius: 999px;
-  background: var(--zl-green-700);
+  background: linear-gradient(90deg, var(--zl-green-700) 0%, var(--zl-amber) 100%);
 }
 
 /* ---------- পয়েন্টের লিস্ট ---------- */
