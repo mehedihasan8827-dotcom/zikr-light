@@ -1,25 +1,35 @@
 <!-- ====== "আমের অফার মূল্য" সেকশন — HTML উইজেটে পেস্ট করুন ======
 
+     পুরনো সেকশনের বদলে বসবে। আঁকাবাঁকা আন্ডারলাইন বাদ দিয়ে দুটি প্যাকেজ
+     পাশাপাশি কার্ডে দেখানো হয়েছে, সাথে কেজিপ্রতি দাম — যাতে বড় প্যাকেজের
+     সুবিধাটা কাস্টমারের চোখে পড়ে।
+
      ⚠️ "প্রায় ২৪-৩০টি আম" হিসাবটা আপনার নিজের তথ্য থেকে নেওয়া
         (৪-৫ টি আমে ১ কেজি)। আসল সংখ্যা ভিন্ন হলে বদলে দিন।
 ================================================================== -->
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Hind+Siliguri:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
 
 .zl-price {
   /* ---- থিম কালার ---- */
-  --zl-green: #0A4A2C;
-  --zl-ink: #17402C;
-  --zl-muted: #6B7C6F;
-  --zl-gold: #A8813C;
-  --zl-rule: #E3DED0;
-  --zl-paper: #FBF9F3;
+  --zl-green-900: #063D22;
+  --zl-green-800: #0A5230;
+  --zl-green-700: #0B6B3A;
+  --zl-ink: #0D482B;
+  --zl-muted: #5C7568;
+  --zl-line: #CBE0D3;
+  --zl-line-soft: #DCEAE1;
+  --zl-mint: #F1F8F3;
+  --zl-amber: #E8A317;       /* আমের শাঁসের রং */
+  --zl-amber-soft: #F5C45E;
+  --zl-gold-pale: #F3DCA6;   /* আমের খোসার রং */
+  --zl-paper: #FDFBF5;       /* উষ্ণ প্রায়-সাদা */
 
-  font-family: 'Hind Siliguri', 'Noto Sans Bengali', system-ui, sans-serif;
+  font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--zl-paper);
   color: var(--zl-ink);
-  padding: 84px 20px 88px;
+  padding: 56px 20px 64px;
   display: flex;
   justify-content: center;
   -webkit-font-smoothing: antialiased;
@@ -29,185 +39,221 @@
 .zl-price *::before,
 .zl-price *::after { box-sizing: border-box; }
 
-.zl-price__inner {
+.zl-price__card {
+  position: relative;
+  overflow: hidden;
   width: 100%;
-  max-width: 620px;
+  max-width: 560px;
   background: #FFFFFF;
-  border: 1px solid var(--zl-rule);
-  border-radius: 6px;
-  padding: 54px 56px 46px;
+  border: 1.5px solid var(--zl-line);
+  border-radius: 20px;
+  padding: 44px 40px 40px;
+  box-shadow: 0 1px 2px rgba(6, 61, 34, .05),
+              0 6px 14px -8px rgba(6, 61, 34, .16),
+              0 22px 44px -26px rgba(6, 61, 34, .3);
 }
 
-/* ---------- উপরের ছোট লেবেল ---------- */
-.zl-price__label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0 0 16px;
-  color: var(--zl-gold);
-  font-size: 13.5px;
-  font-weight: 600;
-}
-
-.zl-price__label::before {
+.zl-price__card::before {
   content: "";
-  width: 26px;
-  height: 1px;
-  background: var(--zl-gold);
+  position: absolute;
+  top: -50%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 125%;
+  padding-bottom: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232, 163, 23, .09) 0%, rgba(232, 163, 23, 0) 62%);
+  pointer-events: none;
 }
 
-/* ---------- হেডিং — উচ্চ-কনট্রাস্ট সেরিফ ---------- */
+.zl-price__card > * { position: relative; }
+
+/* কার্ডের উপরে আমের রঙের সরু পট্টি */
+.zl-price__card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg,
+              var(--zl-green-800) 0%, var(--zl-green-700) 34%,
+              var(--zl-amber) 72%, var(--zl-gold-pale) 100%);
+  pointer-events: none;
+}
+
+/* ---------- হেডিং ---------- */
 .zl-price__title {
   margin: 0;
-  font-family: 'Tiro Bangla', 'Noto Serif Bengali', Georgia, serif;
-  font-weight: 400;
-  color: var(--zl-green);
-  font-size: clamp(30px, 6.2vw, 46px);
-  line-height: 1.32;
-  letter-spacing: -.005em;
+  color: var(--zl-green-900);
+  font-size: clamp(25px, 4.3vw, 32px);
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -.02em;
+  text-align: center;
 }
 
-.zl-price__rule {
-  margin: 34px 0 0;
-  border: 0;
-  border-top: 1px solid var(--zl-rule);
+.zl-price__accent {
+  width: 64px;
+  height: 4px;
+  margin: 16px auto 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--zl-green-700) 0%, var(--zl-amber) 100%);
 }
 
-/* ---------- প্যাকেজ — কার্ড নয়, সারি ----------
-   গ্রিড ব্যবহার করা হয়েছে যাতে লেবেলটি আলাদা সারিতে বসে এবং
-   ওজন ও দাম সবসময় একই লাইনে থাকে। */
-.zl-pack {
+/* ---------- প্যাকেজ দুটি ---------- */
+.zl-price__grid {
   display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: baseline;
-  gap: 0 24px;
-  padding: 28px 0;
-  border-bottom: 1px solid var(--zl-rule);
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 32px 0 0;
 }
 
-.zl-pack__left { min-width: 0; }
+.zl-pack {
+  position: relative;
+  text-align: center;
+  padding: 26px 16px 22px;
+  border: 1.5px solid var(--zl-line);
+  border-radius: 16px;
+  background: #FFFFFF;
+}
 
-.zl-pack__tag {
-  grid-column: 1 / -1;
-  margin: 0 0 8px;
-  color: var(--zl-gold);
-  font-size: 12.5px;
-  font-weight: 600;
+/* জনপ্রিয় প্যাকেজটি মোটা সবুজ বর্ডার ও আমের রঙের তলে আলাদা */
+.zl-pack--popular {
+  border: 2.5px solid var(--zl-green-800);
+  background: #FDF6E8;
+  box-shadow: 0 10px 26px -18px rgba(6, 61, 34, .5);
+}
+
+/* ব্যাজ — আমের শাঁসের রঙে, গাঢ় সবুজ লেখা */
+.zl-pack__badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 14px 3px;
+  border-radius: 999px;
+  background: var(--zl-amber);
+  color: var(--zl-green-900);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .zl-pack__weight {
   margin: 0;
-  font-family: 'Tiro Bangla', 'Noto Serif Bengali', Georgia, serif;
-  color: var(--zl-green);
-  font-size: clamp(21px, 3.6vw, 25px);
-  line-height: 1.35;
-}
-
-.zl-pack__count {
-  margin: 4px 0 0;
   color: var(--zl-muted);
-  font-size: 14.5px;
-  font-weight: 500;
-}
-
-.zl-pack__right {
-  flex: none;
-  text-align: right;
-}
-
-/* দামটিই সেকশনের নায়ক */
-.zl-pack__price {
-  margin: 0;
-  font-family: 'Tiro Bangla', 'Noto Serif Bengali', Georgia, serif;
-  color: var(--zl-green);
-  font-size: clamp(30px, 5.6vw, 40px);
-  line-height: 1.1;
-  letter-spacing: -.01em;
-  white-space: nowrap;
-}
-
-.zl-pack__price span {
-  font-family: 'Hind Siliguri', sans-serif;
-  font-size: .38em;
-  font-weight: 500;
-  color: var(--zl-muted);
-}
-
-.zl-pack__rate {
-  margin: 6px 0 0;
-  color: var(--zl-muted);
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-/* ---------- ফ্রি ডেলিভারি ---------- */
-.zl-price__delivery {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 26px 0 0;
-  color: var(--zl-green);
-  font-size: clamp(15px, 2.4vw, 16.5px);
+  font-size: 16px;
   font-weight: 600;
 }
 
+.zl-pack__price {
+  margin: 6px 0 0;
+  color: var(--zl-green-900);
+  font-size: clamp(29px, 5.4vw, 36px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -.03em;
+}
+
+.zl-pack__price span {
+  font-size: .5em;
+  font-weight: 600;
+  color: var(--zl-muted);
+  letter-spacing: 0;
+}
+
+.zl-pack__rate {
+  margin: 13px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--zl-line-soft);
+  color: var(--zl-ink);
+  font-size: 14.5px;
+  font-weight: 500;
+  line-height: 1.7;
+}
+
+.zl-pack__save {
+  display: inline-block;
+  margin: 12px 0 0;
+  padding: 4px 13px 3px;
+  border-radius: 999px;
+  background: var(--zl-amber);
+  color: var(--zl-green-900);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* ---------- ফ্রি ডেলিভারি লাইন ---------- */
+.zl-price__delivery {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 26px 0 0;
+  padding: 16px 18px;
+  border-radius: 13px;
+  background: var(--zl-green-800);
+  color: #FFFFFF;
+  font-size: clamp(15px, 2.5vw, 16.5px);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ট্রাকের আইকনটি আমের রঙে */
 .zl-price__delivery svg {
   flex: none;
-  color: var(--zl-gold);
+  color: var(--zl-amber-soft);
 }
 
 /* ---------- মোবাইল ---------- */
-@media (max-width: 560px) {
-  .zl-price { padding: 56px 16px 60px; }
-  .zl-price__inner { padding: 36px 24px 32px; }
-  .zl-price__rule { margin-top: 26px; }
-  .zl-pack {
+@media (max-width: 520px) {
+  .zl-price { padding: 40px 16px 48px; }
+  .zl-price__card { padding: 34px 20px 30px; border-radius: 18px; }
+  .zl-price__grid {
     grid-template-columns: 1fr;
-    padding: 22px 0;
+    gap: 24px;
+    margin-top: 36px;
   }
-  .zl-pack__right {
-    text-align: left;
-    margin-top: 10px;
-  }
+  .zl-pack { padding: 24px 16px 20px; }
 }
 </style>
 
 <section class="zl-price" aria-labelledby="zl-price-title">
-  <div class="zl-price__inner">
+  <div class="zl-price__card">
 
-    <p class="zl-price__label">মূল্য</p>
     <h2 class="zl-price__title" id="zl-price-title">আমের অফার মূল্য</h2>
-    <hr class="zl-price__rule">
+    <div class="zl-price__accent" aria-hidden="true"></div>
 
-    <!-- ৬ কেজি -->
-    <div class="zl-pack">
-      <div class="zl-pack__left">
+    <div class="zl-price__grid">
+
+      <!-- ৬ কেজি প্যাকেজ -->
+      <div class="zl-pack">
         <p class="zl-pack__weight">৬ কেজি</p>
-        <p class="zl-pack__count">প্রায় ২৪-৩০টি আম</p>
-      </div>
-      <div class="zl-pack__right">
         <p class="zl-pack__price">১,২৯০ <span>টাকা</span></p>
-        <p class="zl-pack__rate">কেজিপ্রতি ২১৫ টাকা</p>
+        <p class="zl-pack__rate">
+          কেজিপ্রতি ২১৫ টাকা<br>
+          প্রায় ২৪-৩০টি আম
+        </p>
       </div>
-    </div>
 
-    <!-- ১০ কেজি -->
-    <div class="zl-pack">
-      <div class="zl-pack__left">
-        <p class="zl-pack__tag">সবচেয়ে জনপ্রিয়</p>
+      <!-- ১০ কেজি প্যাকেজ -->
+      <div class="zl-pack zl-pack--popular">
+        <span class="zl-pack__badge">সবচেয়ে জনপ্রিয়</span>
         <p class="zl-pack__weight">১০ কেজি</p>
-        <p class="zl-pack__count">প্রায় ৪০-৫০টি আম</p>
-      </div>
-      <div class="zl-pack__right">
         <p class="zl-pack__price">২,১০০ <span>টাকা</span></p>
-        <p class="zl-pack__rate">কেজিপ্রতি ২১০ টাকা — ৫০ টাকা সাশ্রয়</p>
+        <p class="zl-pack__rate">
+          কেজিপ্রতি ২১০ টাকা<br>
+          প্রায় ৪০-৫০টি আম
+        </p>
+        <span class="zl-pack__save">৫০ টাকা সাশ্রয়</span>
       </div>
+
     </div>
 
     <p class="zl-price__delivery">
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-           stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M1 3h15v13H1z"/>
         <path d="M16 8h4l3 3v5h-7z"/>
         <circle cx="5.5" cy="18.5" r="2.5"/>

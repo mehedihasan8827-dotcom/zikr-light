@@ -1,26 +1,29 @@
 <!-- ====== আমের বৈশিষ্ট্য সেকশন — কপি করে HTML উইজেটে পেস্ট করুন ======
-     পয়েন্ট বাড়াতে/কমাতে গোটা <li> ব্লকটি কপি করে বসান বা মুছে দিন
-     (নাম্বারটাও হাতে বদলে দিতে হবে)।
+     পয়েন্ট বাড়াতে/কমাতে নিচের <li> ব্লকটি কপি করে বসান বা মুছে দিন।
      রঙ বদলাতে .zl-features এর ভেতরের --zl-* ভ্যারিয়েবলগুলো এডিট করুন।
 ========================================================================= -->
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Tiro+Bangla&family=Hind+Siliguri:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap');
 
 .zl-features {
   /* ---- থিম কালার ---- */
-  --zl-green: #0A4A2C;      /* হেডিং ও প্রধান সবুজ */
-  --zl-ink: #17402C;        /* বডি টেক্সট */
-  --zl-muted: #6B7C6F;
-  --zl-gold: #A8813C;       /* পাকা আমের খোসার সোনালি */
-  --zl-rule: #E3DED0;       /* উষ্ণ হেয়ারলাইন */
-  --zl-paper: #FBF9F3;      /* উষ্ণ প্রায়-সাদা */
+  --zl-green-900: #063D22;
+  --zl-green-800: #0A5230;
+  --zl-green-700: #0B6B3A;
+  --zl-ink: #0D482B;
+  --zl-line: #CBE0D3;
+  --zl-line-soft: #DCEAE1;
+  --zl-mint: #F1F8F3;
+  --zl-amber: #E8A317;       /* আমের শাঁসের রং */
+  --zl-amber-soft: #F5C45E;
+  --zl-gold-pale: #F3DCA6;   /* আমের খোসার রং */
+  --zl-paper: #FDFBF5;       /* উষ্ণ প্রায়-সাদা */
 
-  /* বডি ফন্ট */
-  font-family: 'Hind Siliguri', 'Noto Sans Bengali', system-ui, sans-serif;
+  font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Segoe UI', system-ui, -apple-system, sans-serif;
   background: var(--zl-paper);
   color: var(--zl-ink);
-  padding: 84px 20px 88px;
+  padding: 56px 20px 64px;
   display: flex;
   justify-content: center;
   -webkit-font-smoothing: antialiased;
@@ -30,119 +33,162 @@
 .zl-features *::before,
 .zl-features *::after { box-sizing: border-box; }
 
-.zl-features__inner {
+.zl-features__card {
+  position: relative;
+  overflow: hidden;
   width: 100%;
-  max-width: 620px;
+  max-width: 560px;
   background: #FFFFFF;
-  border: 1px solid var(--zl-rule);
-  border-radius: 6px;          /* তীক্ষ্ণ কোণ — গোল কোণের চেয়ে বেশি সংযত */
-  padding: 54px 56px 46px;
+  border: 1.5px solid var(--zl-line);
+  border-radius: 20px;
+  padding: 44px 44px 34px;
+  box-shadow: 0 1px 2px rgba(6, 61, 34, .05),
+              0 6px 14px -8px rgba(6, 61, 34, .16),
+              0 22px 44px -26px rgba(6, 61, 34, .3);
 }
 
-/* ---------- উপরের ছোট লেবেল ----------
-   বাংলা যুক্তাক্ষর ভেঙে যায়, তাই এখানে letter-spacing দেওয়া হয়নি।
-   লেবেলটি আলাদা বোঝাতে পাশে একটি ছোট সোনালি রেখা ব্যবহার করা হয়েছে। */
-.zl-features__label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0 0 16px;
-  color: var(--zl-gold);
-  font-size: 13.5px;
-  font-weight: 600;
-}
-
-.zl-features__label::before {
+.zl-features__card::before {
   content: "";
-  width: 26px;
-  height: 1px;
-  background: var(--zl-gold);
+  position: absolute;
+  top: -50%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 125%;
+  padding-bottom: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232, 163, 23, .09) 0%, rgba(232, 163, 23, 0) 62%);
+  pointer-events: none;
 }
 
-/* ---------- হেডিং — উচ্চ-কনট্রাস্ট সেরিফ ---------- */
+.zl-features__card > * { position: relative; }
+
+/* কার্ডের উপরে আমের রঙের সরু পট্টি */
+.zl-features__card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg,
+              var(--zl-green-800) 0%, var(--zl-green-700) 34%,
+              var(--zl-amber) 72%, var(--zl-gold-pale) 100%);
+  pointer-events: none;
+}
+
+/* ---------- হেডিং ---------- */
 .zl-features__title {
   margin: 0;
-  font-family: 'Tiro Bangla', 'Noto Serif Bengali', Georgia, serif;
-  font-weight: 400;            /* সেরিফটির নিজস্ব ওজনই যথেষ্ট */
-  color: var(--zl-green);
-  font-size: clamp(30px, 6.2vw, 46px);
-  line-height: 1.32;
-  letter-spacing: -.005em;
+  color: var(--zl-green-900);
+  font-size: clamp(25px, 4.3vw, 32px);
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -.02em;
+  text-align: center;
 }
 
-.zl-features__rule {
-  margin: 34px 0 0;
-  border: 0;
-  border-top: 1px solid var(--zl-rule);
+.zl-features__accent {
+  width: 64px;
+  height: 4px;
+  margin: 16px auto 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--zl-green-700) 0%, var(--zl-amber) 100%);
 }
 
-/* ---------- বৈশিষ্ট্যের তালিকা ---------- */
+/* ---------- বৈশিষ্ট্যের লিস্ট ---------- */
 .zl-features__list {
-  margin: 0;
+  margin: 30px 0 0;
   padding: 0;
   list-style: none;
 }
 
 .zl-features__list li {
-  display: grid;
-  grid-template-columns: 34px 1fr;
-  gap: 0 18px;
-  padding: 24px 0;
-  border-bottom: 1px solid var(--zl-rule);
-  font-size: clamp(16px, 2.5vw, 17.5px);
-  font-weight: 500;
-  line-height: 1.85;
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  padding: 17px 0;
+  color: var(--zl-ink);
+  font-size: clamp(16px, 2.6vw, 17.5px);
+  font-weight: 600;
+  line-height: 1.72;
 }
 
-.zl-features__list li:last-child { border-bottom: 0; padding-bottom: 6px; }
+.zl-features__list li + li {
+  border-top: 1px solid var(--zl-line-soft);
+}
 
-/* সেরিফ নাম্বার — সোনালি */
-.zl-features__no {
-  font-family: 'Tiro Bangla', 'Noto Serif Bengali', Georgia, serif;
-  color: var(--zl-gold);
-  font-size: 17px;
-  line-height: 1.85;
-  letter-spacing: .04em;
+/* ভরাট সবুজ চেক আইকন */
+.zl-features__check {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-top: 3px;
+  border-radius: 50%;
+  background: var(--zl-green-800);
+  color: #FFFFFF;
 }
 
 /* ---------- মোবাইল ---------- */
-@media (max-width: 560px) {
-  .zl-features { padding: 56px 16px 60px; }
-  .zl-features__inner { padding: 36px 24px 30px; }
-  .zl-features__rule { margin-top: 26px; }
-  .zl-features__list li {
-    grid-template-columns: 26px 1fr;
-    gap: 0 13px;
-    padding: 20px 0;
-  }
-  .zl-features__no { font-size: 15.5px; }
+@media (max-width: 520px) {
+  .zl-features { padding: 40px 16px 48px; }
+  .zl-features__card { padding: 34px 20px 26px; border-radius: 18px; }
+  .zl-features__list { margin-top: 24px; }
+  .zl-features__list li { gap: 13px; padding: 15px 0; }
+  .zl-features__check { width: 24px; height: 24px; }
 }
 </style>
 
 <section class="zl-features" aria-labelledby="zl-features-title">
-  <div class="zl-features__inner">
+  <div class="zl-features__card">
 
-    <p class="zl-features__label">বৈশিষ্ট্য</p>
     <h2 class="zl-features__title" id="zl-features-title">সুইট কাটিমন আমের বৈশিষ্ট্য</h2>
-    <hr class="zl-features__rule">
+    <div class="zl-features__accent" aria-hidden="true"></div>
 
     <ul class="zl-features__list">
+
       <li>
-        <span class="zl-features__no" aria-hidden="true">০১</span>
-        <span>কড়া-মিষ্টি, একদম টকভাব নেই।</span>
+        <span class="zl-features__check" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </span>
+        কড়া-মিষ্টি, একদম টকভাব নেই।
       </li>
+
       <li>
-        <span class="zl-features__no" aria-hidden="true">০২</span>
-        <span>আঠাবিহীন, শিশুদের প্রিয়।</span>
+        <span class="zl-features__check" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </span>
+        আঠাবিহীন, শিশুদের প্রিয়।
       </li>
+
       <li>
-        <span class="zl-features__no" aria-hidden="true">০৩</span>
-        <span>বড় সাইজের — এভারেজ ৪-৫ টি আমে ১ কেজি ওজন হয়।</span>
+        <span class="zl-features__check" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </span>
+        বড় সাইজের — এভারেজ ৪-৫ টি আমে ১ কেজি ওজন হয়।
       </li>
+
       <li>
-        <span class="zl-features__no" aria-hidden="true">০৪</span>
-        <span>আঁটি পাতলা, মাংসল অংশের পরিমাণ অনেক বেশি।</span>
+        <span class="zl-features__check" aria-hidden="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </span>
+        আঁটি পাতলা, মাংসল অংশের পরিমাণ অনেক বেশি।
       </li>
+
     </ul>
 
   </div>
