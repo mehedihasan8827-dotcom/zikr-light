@@ -2,9 +2,9 @@
      বসানোর জায়গা: চেকআউট ফর্ম ও "অর্ডার কনফার্ম করুন" বাটনের ঠিক নিচে।
 
      নাম্বার বদলাতে ৩ জায়গায় এডিট করুন:
-     1) href="https://wa.me/8801842311001?text=..."   (দেশ কোড ৮৮ সহ, + বা ০ ছাড়া)
-     2) href="tel:+8801842311001"
-     3) বাটনে দেখানো বাংলা নাম্বার: ০১৮৪২৩১১০০১
+     1) href="https://wa.me/8801611249132?text=..."   (দেশ কোড ৮৮ সহ, + বা ০ ছাড়া)
+     2) href="tel:+8801611249132"
+     3) বাটনে দেখানো বাংলা নাম্বার: ০১৬১১-২৪৯১৩২
 ============================================================================== -->
 
 <style>
@@ -12,20 +12,16 @@
 
 .zl-order {
   /* ---- থিম কালার: এখান থেকে পুরো সেকশনের রঙ বদলানো যাবে ---- */
-  --zl-green: #0B6B3A;
-  --zl-green-dark: #07502B;
-  --zl-green-deep: #043221;
-  --zl-mint: #F3F8F4;
-  --zl-line: #E4EEE8;
-  --zl-ink: #12251B;
-  --zl-muted: #5F7268;
-  --zl-radius: 18px;
+  --zl-deep-1: #0C5537;
+  --zl-deep-2: #0A4A30;
+  --zl-deep-3: #05291B;
+  --zl-gold: #D9BE7A;
+  --zl-gold-bright: #EBD49A;
+  --zl-cream: #F5EFE0;
+  --zl-paper: #F7F3EA;
 
   font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background:
-    radial-gradient(120% 90% at 50% -10%, rgba(11, 107, 58, .07) 0%, rgba(11, 107, 58, 0) 60%),
-    #FFFFFF;
-  color: var(--zl-ink);
+  background: var(--zl-paper);
   padding: 56px 20px 64px;
   display: flex;
   justify-content: center;
@@ -41,27 +37,27 @@
   overflow: hidden;
   width: 100%;
   max-width: 560px;
-  background: #FFFFFF;
-  border: 1px solid var(--zl-line);
-  border-radius: 26px;
-  padding: 42px 44px 46px;
+  border-radius: 24px;
+  padding: 42px 44px 44px;
   text-align: center;
-  box-shadow: 0 1px 1px rgba(4, 50, 33, .03),
-              0 4px 10px -6px rgba(4, 50, 33, .08),
-              0 24px 56px -28px rgba(4, 50, 33, .26);
+  background: linear-gradient(165deg, var(--zl-deep-1) 0%, var(--zl-deep-2) 45%, var(--zl-deep-3) 100%);
+  border: 1px solid rgba(217, 190, 122, .3);
+  box-shadow: 0 2px 4px rgba(5, 41, 27, .2),
+              0 18px 40px -18px rgba(5, 41, 27, .55),
+              inset 0 1px 0 rgba(235, 212, 154, .16);
 }
 
-/* কার্ডের ভেতরে উপরের দিকে হালকা সবুজ আভা */
+/* কার্ডের উপরে নরম সোনালি আভা */
 .zl-order__card::before {
   content: "";
   position: absolute;
-  top: -55%;
+  top: -40%;
   left: 50%;
   transform: translateX(-50%);
-  width: 130%;
-  padding-bottom: 110%;
+  width: 120%;
+  padding-bottom: 90%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(11, 107, 58, .06) 0%, rgba(11, 107, 58, 0) 62%);
+  background: radial-gradient(circle, rgba(217, 190, 122, .13) 0%, rgba(217, 190, 122, 0) 65%);
   pointer-events: none;
 }
 
@@ -69,11 +65,39 @@
 
 /* ---------- হেডলাইন ---------- */
 .zl-order__title {
-  margin: 0 0 28px;
-  font-size: clamp(22px, 3.8vw, 28px);
+  margin: 0;
+  color: var(--zl-cream);
+  font-size: clamp(23px, 4vw, 30px);
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.4;
   letter-spacing: -.01em;
+}
+
+/* সোনালি অলংকরণ */
+.zl-order__orn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin: 16px 0 30px;
+}
+
+.zl-order__orn i {
+  display: block;
+  width: 44px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(217, 190, 122, 0), var(--zl-gold));
+}
+
+.zl-order__orn i:last-child {
+  background: linear-gradient(90deg, var(--zl-gold), rgba(217, 190, 122, 0));
+}
+
+.zl-order__orn span {
+  width: 6px;
+  height: 6px;
+  transform: rotate(45deg);
+  background: var(--zl-gold);
 }
 
 /* ---------- বাটন ---------- */
@@ -90,10 +114,10 @@
   gap: 12px;
   width: 100%;
   padding: 17px 24px;
-  border-radius: var(--zl-radius);
+  border-radius: 14px;
   font-family: inherit;
   font-size: clamp(16px, 2.6vw, 18px);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.2;
   text-decoration: none;
   cursor: pointer;
@@ -104,47 +128,44 @@
 .zl-btn svg { flex: none; }
 
 .zl-btn:focus-visible {
-  outline: 3px solid rgba(11, 107, 58, .35);
+  outline: 3px solid rgba(217, 190, 122, .55);
   outline-offset: 3px;
 }
 
-/* প্রাইমারি — হোয়াটসঅ্যাপ */
+/* প্রাইমারি — হোয়াটসঅ্যাপ (সোনালি, গাঢ় সবুজ লেখা) */
 .zl-btn--wa {
-  background: linear-gradient(180deg, #0D7B43 0%, var(--zl-green) 55%, var(--zl-green-dark) 100%);
-  color: #FFFFFF;
-  border: 1px solid var(--zl-green-dark);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18),
-              0 10px 22px -12px rgba(7, 80, 43, .6);
+  background: linear-gradient(180deg, var(--zl-gold-bright) 0%, var(--zl-gold) 100%);
+  color: var(--zl-deep-3);
+  border: 1px solid var(--zl-gold-bright);
+  box-shadow: 0 10px 24px -12px rgba(5, 41, 27, .75);
 }
 
 .zl-btn--wa:hover {
   transform: translateY(-2px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22),
-              0 18px 30px -14px rgba(7, 80, 43, .62);
+  box-shadow: 0 18px 32px -14px rgba(5, 41, 27, .8);
 }
 
 .zl-btn--wa:active { transform: translateY(0); }
 
-/* সেকেন্ডারি — কল */
+/* সেকেন্ডারি — কল (সোনালি বর্ডার) */
 .zl-btn--call {
-  background: #FFFFFF;
-  color: var(--zl-green-deep);
-  border: 1.5px solid rgba(11, 107, 58, .22);
+  background: rgba(255, 255, 255, .05);
+  color: var(--zl-cream);
+  border: 1.5px solid rgba(217, 190, 122, .45);
   letter-spacing: .02em;
-  box-shadow: 0 6px 18px -14px rgba(4, 50, 33, .5);
 }
 
 .zl-btn--call:hover {
   transform: translateY(-2px);
-  border-color: var(--zl-green);
-  background: var(--zl-mint);
+  border-color: var(--zl-gold);
+  background: rgba(217, 190, 122, .12);
 }
 
 .zl-btn--call:active { transform: translateY(0); }
 
 .zl-btn__num {
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
+  color: var(--zl-gold-bright);
 }
 
 /* ---------- অথবা ডিভাইডার ---------- */
@@ -153,7 +174,7 @@
   align-items: center;
   gap: 14px;
   margin: 4px 0;
-  color: var(--zl-muted);
+  color: rgba(245, 239, 224, .72);
   font-size: 14px;
 }
 
@@ -162,14 +183,14 @@
   content: "";
   flex: 1;
   height: 1px;
-  background: var(--zl-line);
+  background: rgba(217, 190, 122, .28);
 }
 
 /* ---------- মোবাইল ---------- */
 @media (max-width: 520px) {
   .zl-order { padding: 40px 16px 48px; }
-  .zl-order__card { padding: 32px 22px 34px; border-radius: 22px; }
-  .zl-order__title { margin-bottom: 24px; }
+  .zl-order__card { padding: 34px 20px 34px; border-radius: 20px; }
+  .zl-order__orn { margin-bottom: 26px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -182,12 +203,13 @@
   <div class="zl-order__card">
 
     <h2 class="zl-order__title" id="zl-order-title">সরাসরি কথা বলে অর্ডার করুন</h2>
+    <div class="zl-order__orn" aria-hidden="true"><i></i><span></span><i></i></div>
 
     <div class="zl-order__actions">
 
       <!-- হোয়াটসঅ্যাপ বাটন -->
       <a class="zl-btn zl-btn--wa"
-         href="https://wa.me/8801842311001?text=আসসালামু%20আলাইকুম%2C%20আমি%20ফর্ম%20পূরণ%20না%20করে%20অর্ডার%20করতে%20চাই।"
+         href="https://wa.me/8801611249132?text=আসসালামু%20আলাইকুম%2C%20আমি%20ফর্ম%20পূরণ%20না%20করে%20অর্ডার%20করতে%20চাই।"
          target="_blank" rel="noopener noreferrer"
          aria-label="হোয়াটসঅ্যাপে অর্ডার করুন">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -200,14 +222,14 @@
 
       <!-- কল বাটন -->
       <a class="zl-btn zl-btn--call"
-         href="tel:+8801842311001"
-         aria-label="কল করে অর্ডার করুন, ০১৮৪২৩১১০০১">
+         href="tel:+8801611249132"
+         aria-label="কল করে অর্ডার করুন, ০১৬১১-২৪৯১৩২">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="1.9"
              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92Z"/>
         </svg>
-        কল করুন <span class="zl-btn__num">০১৮৪২৩১১০০১</span>
+        কল করুন <span class="zl-btn__num">০১৬১১-২৪৯১৩২</span>
       </a>
 
     </div>

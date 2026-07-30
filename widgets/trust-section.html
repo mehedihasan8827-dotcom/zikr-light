@@ -14,16 +14,16 @@
 
 .zl-trust {
   /* ---- থিম কালার ---- */
-  --zl-green: #0B6B3A;
-  --zl-mint: #F3F8F4;
-  --zl-line: #E4EEE8;
-  --zl-ink: #12251B;
+  --zl-deep-1: #0C5537;
+  --zl-deep-2: #0A4A30;
+  --zl-deep-3: #05291B;
+  --zl-gold: #D9BE7A;
+  --zl-gold-bright: #EBD49A;
+  --zl-cream: #F5EFE0;
+  --zl-paper: #F7F3EA;
 
   font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background:
-    radial-gradient(120% 90% at 50% -10%, rgba(11, 107, 58, .07) 0%, rgba(11, 107, 58, 0) 60%),
-    #FFFFFF;
-  color: var(--zl-ink);
+  background: var(--zl-paper);
   padding: 56px 20px 64px;
   display: flex;
   justify-content: center;
@@ -39,25 +39,25 @@
   overflow: hidden;
   width: 100%;
   max-width: 560px;
-  background: #FFFFFF;
-  border: 1px solid var(--zl-line);
-  border-radius: 26px;
-  padding: 42px 44px 26px;
-  box-shadow: 0 1px 1px rgba(4, 50, 33, .03),
-              0 4px 10px -6px rgba(4, 50, 33, .08),
-              0 24px 56px -28px rgba(4, 50, 33, .26);
+  border-radius: 24px;
+  padding: 42px 44px 34px;
+  background: linear-gradient(165deg, var(--zl-deep-1) 0%, var(--zl-deep-2) 45%, var(--zl-deep-3) 100%);
+  border: 1px solid rgba(217, 190, 122, .3);
+  box-shadow: 0 2px 4px rgba(5, 41, 27, .2),
+              0 18px 40px -18px rgba(5, 41, 27, .55),
+              inset 0 1px 0 rgba(235, 212, 154, .16);
 }
 
 .zl-trust__card::before {
   content: "";
   position: absolute;
-  top: -55%;
+  top: -40%;
   left: 50%;
   transform: translateX(-50%);
-  width: 130%;
-  padding-bottom: 110%;
+  width: 120%;
+  padding-bottom: 90%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(11, 107, 58, .06) 0%, rgba(11, 107, 58, 0) 62%);
+  background: radial-gradient(circle, rgba(217, 190, 122, .13) 0%, rgba(217, 190, 122, 0) 65%);
   pointer-events: none;
 }
 
@@ -66,24 +66,43 @@
 /* ---------- হেডিং ---------- */
 .zl-trust__title {
   margin: 0;
-  font-size: clamp(22px, 3.8vw, 28px);
+  color: var(--zl-cream);
+  font-size: clamp(23px, 4vw, 30px);
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.4;
   letter-spacing: -.01em;
   text-align: center;
 }
 
-.zl-trust__accent {
-  width: 48px;
-  height: 3px;
-  margin: 14px auto 0;
-  border-radius: 999px;
-  background: var(--zl-green);
+.zl-trust__orn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin: 16px 0 0;
+}
+
+.zl-trust__orn i {
+  display: block;
+  width: 44px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(217, 190, 122, 0), var(--zl-gold));
+}
+
+.zl-trust__orn i:last-child {
+  background: linear-gradient(90deg, var(--zl-gold), rgba(217, 190, 122, 0));
+}
+
+.zl-trust__orn span {
+  width: 6px;
+  height: 6px;
+  transform: rotate(45deg);
+  background: var(--zl-gold);
 }
 
 /* ---------- পয়েন্টের লিস্ট ---------- */
 .zl-trust__list {
-  margin: 26px 0 0;
+  margin: 28px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -93,12 +112,13 @@
   align-items: flex-start;
   gap: 14px;
   padding: 16px 0;
+  color: rgba(245, 239, 224, .92);
   font-size: clamp(15.5px, 2.5vw, 17px);
   line-height: 1.75;
 }
 
 .zl-trust__list li + li {
-  border-top: 1px solid var(--zl-line);
+  border-top: 1px solid rgba(217, 190, 122, .18);
 }
 
 .zl-trust__check {
@@ -109,17 +129,17 @@
   width: 26px;
   height: 26px;
   margin-top: 2px;
-  border: 1px solid var(--zl-line);
+  border: 1px solid rgba(217, 190, 122, .45);
   border-radius: 50%;
-  background: var(--zl-mint);
-  color: var(--zl-green);
+  background: rgba(217, 190, 122, .12);
+  color: var(--zl-gold-bright);
 }
 
 /* ---------- মোবাইল ---------- */
 @media (max-width: 520px) {
   .zl-trust { padding: 40px 16px 48px; }
-  .zl-trust__card { padding: 32px 22px 26px; border-radius: 22px; }
-  .zl-trust__list { margin-top: 20px; }
+  .zl-trust__card { padding: 34px 20px 26px; border-radius: 20px; }
+  .zl-trust__list { margin-top: 22px; }
   .zl-trust__list li { gap: 12px; padding: 14px 0; }
   .zl-trust__check { width: 24px; height: 24px; }
 }
@@ -129,7 +149,7 @@
   <div class="zl-trust__card">
 
     <h2 class="zl-trust__title" id="zl-trust-title">কেন আমাদের প্রতি আস্থা রাখবেন</h2>
-    <div class="zl-trust__accent" aria-hidden="true"></div>
+    <div class="zl-trust__orn" aria-hidden="true"><i></i><span></span><i></i></div>
 
     <ul class="zl-trust__list">
 
